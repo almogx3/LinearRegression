@@ -17,6 +17,7 @@ def create_cov_matrix(d, k):
     R = np.diag(random_values)
     return R
 
+
 def create_random_vectors(num_of_vectors=100, cov_matrix=np.eye(100), mean=np.zeros((100,))):
     """
     create_random_vectors creates random vectors using cov matrix
@@ -35,11 +36,13 @@ def create_random_vectors(num_of_vectors=100, cov_matrix=np.eye(100), mean=np.ze
     x = np.vstack((np.ones((1, num_of_vectors)), x))
     return x, y
 
-def LMSprocess(x, y):
+
+def LMSprocess(x, y, batch_size=1):
     """
     LMSprocess run LMS process on x,y
     :param x: training vectors
     :param y: desired answer
+    :param batch_size: batch size for calculating error in LMS
     :return: weights according to LMS process
     """
     eps_value = 5e-3
@@ -49,17 +52,19 @@ def LMSprocess(x, y):
     maxIter = 2000
     i = 0
     while ((i < maxIter)):
-        for ind in range(len(y)):
-            x_current = x[:, ind]
-            error_current = y[ind] - np.matmul(x_current.T, weights)
+        for ind in range(len(y) - batch_size + 1):
+            x_current = x[:, ind:(ind + batch_size)]
+            error_current = y[ind:(ind + batch_size)] - np.matmul(x_current.T, weights)
             error_mean_current = np.sum((y - np.matmul(x.T, weights)) ** 2) ** 0.5
-            if (error_mean_current > Emax) or (abs(error_mean_current) > 1.1 * abs(error_mean_old)):
+            if ((error_mean_current > Emax) or (abs(error_mean_current) > 1.1 * abs(error_mean_old))):
                 weights = np.random.rand(x.shape[0], )
                 error_mean_old = np.Inf
                 i = 0
                 print('new weights')
             else:
-                weights = weights + np.dot(error_current * eps_value, x_current)
+                error_eps = (error_current * eps_value)
+                # error_eps = error_eps.reshape((error_eps.shape[0],1))
+                weights = weights + np.dot(x_current, error_eps) / len(error_eps)
 
             if (abs(error_mean_current) == abs(error_mean_old)):
                 i = maxIter + 5
@@ -71,6 +76,7 @@ def LMSprocess(x, y):
             print('maxIter')
 
     return weights
+
 
 def PCAprocess(x):
     """
@@ -95,6 +101,7 @@ def PCAprocess(x):
 
     return eigenvalues_sorted, eigenvectors_sorted, S
 
+
 def projection(x, k, eigenvectors):
     """
     projection returns projection of x
@@ -109,13 +116,15 @@ def projection(x, k, eigenvectors):
 
     return projcetion_x, eigenvectors_current
 
-def create_n_calc_all_data(d, n, k, noise_amp=1):
+
+def create_n_calc_all_data(d, n, k, noise_amp=1, batch_size=1):
     """
 
     :param d: dimension of vector x (x = [1,x(d dimension)])
     :param n: number of wanted vectors
     :param k: the effective dimension of x
     :param noise_amp: amplitude of the noise added to y
+    :param batch_size: batch size for LMS process
     :return:  y_real - the real y without noise
               y_LMS - estimation of y after noising using LMS
               y_pseudo_inverse - estimation of y after noising using pseudo inverse
@@ -126,12 +135,12 @@ def create_n_calc_all_data(d, n, k, noise_amp=1):
     y_real = y
     y = y + noise_amp * np.random.rand(y.shape[0], )
     SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
-    weights = LMSprocess(x, y)
-    weights_real = LMSprocess(x, y_real)
+    weights = LMSprocess(x, y, batch_size=batch_size)
+    weights_real = LMSprocess(x, y_real, batch_size=batch_size)
     # run PCA process
     eigenvalues_sorted, eigenvectors_sorted, S = PCAprocess(x)
     projcetion_x, eigenvectors_k = projection(x, k, eigenvectors_sorted)
-    weights_projection_PCA = LMSprocess(projcetion_x, y)
+    weights_projection_PCA = LMSprocess(projcetion_x, y, batch_size=batch_size)
     weights_PCA = np.matmul(eigenvectors_k, weights_projection_PCA)
 
     theta_at = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
@@ -140,6 +149,7 @@ def create_n_calc_all_data(d, n, k, noise_amp=1):
     # y_LMS_real - results for data without noise
     y_LMS_real = np.matmul(x.T, weights_real)
     return y_real, y_LMS, y_pseudo_inverse, SNR
+
 
 def main():
     plt.interactive(True)
@@ -151,12 +161,14 @@ def main():
     k = 10
     # number of runs
     num_runs = 10
+
+    """
+    # different SNR mode
     num_SNR = 10
     noise_amp_vec = np.concatenate([np.arange(num_SNR), np.arange(num_SNR) * 10])
     noise_amp_vec += np.ones_like(noise_amp_vec)
     # noise_amp_vec = [1, 10, 100, 1000]
-    # noise_amp_vec = [1]
-
+    
     error_LMS = np.zeros((len(noise_amp_vec), 1))
     error_pseudo_inv = np.zeros((len(noise_amp_vec), 1))
     SNR = np.zeros((len(noise_amp_vec), 1))
@@ -164,33 +176,27 @@ def main():
     error_pseudo_inv_run = np.zeros((num_runs, 1))
     SNR_run = np.zeros((num_runs, 1))
 
-    # Progressbar
-    widgets= ['Processing estimation: ', Percentage(),' ',Bar()]
+    widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
     max_val = len(noise_amp_vec) * num_runs
     bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
-    # bar.update(0)
     for i in range(len(noise_amp_vec)):
         noise_amp = noise_amp_vec[i]
         for l in range(num_runs):
-            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp)
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp, batch_size)
             error_pseudo_inv_run[l] = np.sum((y_real - y_pseudo_inverse) ** 2) ** 0.5
             error_LMS_run[l] = np.sum((y_real - y_LMS) ** 2) ** 0.5
             SNR_run[l] = SNR_current
-            bar.update((i+1)*(l+1))
+            bar.update((i + 1) * (l + 1))
 
         error_pseudo_inv[i] = np.mean(error_pseudo_inv_run)
         error_LMS[i] = np.mean(error_LMS_run)
         SNR[i] = np.mean(SNR_run)
         print('iteration: ' + str(i))
     bar.finish()
-    # plt.figure()
-    # plt.plot(y_real, 'r')
-    # plt.plot(y_LMS, 'g')
-    # plt.plot(y_pseudo_inverse, 'b')
-    # plt.plot(y_LMS_real,'k')
-    # plt.legend(('Real', 'weights LMS including noise', 'weights pseudo inverse', 'weights LMS without noise'),
-    #            loc='upper right')
+
+    # sorting by SNR
     ind_sort = np.argsort(SNR, axis=0)
+    # ploting the results SNR
     plt.figure()
     plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, error_LMS), 'g')
     plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, error_pseudo_inv), 'b')
@@ -201,6 +207,52 @@ def main():
     plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
     plt.grid(b=True, which='minor', color='k', linestyle='--')
     plt.xlabel('SNR [dB]')
+    plt.ylabel('Root Mean Square Error')
+    plt.show()
+    
+    """
+
+    # batch size mode
+    batch_size = [1, 2, 5, 10, 50]
+
+    error_LMS = np.zeros((len(batch_size), 1))
+    error_pseudo_inv = np.zeros((len(batch_size), 1))
+    SNR = np.zeros((len(batch_size), 1))
+    error_LMS_run = np.zeros((num_runs, 1))
+    error_pseudo_inv_run = np.zeros((num_runs, 1))
+    SNR_run = np.zeros((num_runs, 1))
+
+    # Progressbar
+    widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
+    max_val = len(batch_size) * num_runs
+    bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+    for i in range(len(batch_size)):
+        batch_size_current = batch_size[i]
+        for l in range(num_runs):
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp=3,
+                                                                                  batch_size=batch_size_current)
+            error_pseudo_inv_run[l] = np.sum((y_real - y_pseudo_inverse) ** 2) ** 0.5
+            error_LMS_run[l] = np.sum((y_real - y_LMS) ** 2) ** 0.5
+            SNR_run[l] = SNR_current
+            bar.update((i + 1) * (l + 1))
+
+        error_pseudo_inv[i] = np.mean(error_pseudo_inv_run)
+        error_LMS[i] = np.mean(error_LMS_run)
+        SNR[i] = np.mean(SNR_run)
+        print('iteration: ' + str(i))
+    bar.finish()
+
+    # plotting the batch size results
+    plt.figure()
+    plt.plot(batch_size, error_LMS, 'g')
+    plt.plot(batch_size, error_pseudo_inv, 'b')
+    plt.legend(('weights LMS', 'weights pseudo inverse'),
+               loc='upper right')
+    plt.title('Errors as function of batch size')
+    plt.minorticks_on()
+    plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    plt.grid(b=True, which='minor', color='k', linestyle='--')
+    plt.xlabel('Batch size')
     plt.ylabel('Root Mean Square Error')
     plt.show()
 
