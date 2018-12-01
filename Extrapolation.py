@@ -156,19 +156,19 @@ def main():
     # x dimensions
     d = 1000
     # number of samples
-    n = 100
+    n = 10
     # The "real dimension
     k = 10
     # number of runs
     num_runs = 10
 
-    """
+
     # different SNR mode
     num_SNR = 10
     noise_amp_vec = np.concatenate([np.arange(num_SNR), np.arange(num_SNR) * 10])
     noise_amp_vec += np.ones_like(noise_amp_vec)
     # noise_amp_vec = [1, 10, 100, 1000]
-    
+
     error_LMS = np.zeros((len(noise_amp_vec), 1))
     error_pseudo_inv = np.zeros((len(noise_amp_vec), 1))
     SNR = np.zeros((len(noise_amp_vec), 1))
@@ -182,9 +182,9 @@ def main():
     for i in range(len(noise_amp_vec)):
         noise_amp = noise_amp_vec[i]
         for l in range(num_runs):
-            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp, batch_size)
-            error_pseudo_inv_run[l] = np.sum((y_real - y_pseudo_inverse) ** 2) ** 0.5
-            error_LMS_run[l] = np.sum((y_real - y_LMS) ** 2) ** 0.5
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp)
+            error_pseudo_inv_run[l] = (np.mean(y_real - y_pseudo_inverse) ** 2) ** 0.5
+            error_LMS_run[l] = (np.mean(y_real - y_LMS) ** 2) ** 0.5
             SNR_run[l] = SNR_current
             bar.update((i + 1) * (l + 1))
 
@@ -207,10 +207,10 @@ def main():
     plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
     plt.grid(b=True, which='minor', color='k', linestyle='--')
     plt.xlabel('SNR [dB]')
-    plt.ylabel('Root Mean Square Error')
+    plt.ylabel('Mean Root Mean Square Error')
     plt.show()
-    
-    """
+
+
 
     # batch size mode
     batch_size = [1, 2, 5, 10, 50]
@@ -229,10 +229,10 @@ def main():
     for i in range(len(batch_size)):
         batch_size_current = batch_size[i]
         for l in range(num_runs):
-            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp=3,
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp=1,
                                                                                   batch_size=batch_size_current)
-            error_pseudo_inv_run[l] = np.sum((y_real - y_pseudo_inverse) ** 2) ** 0.5
-            error_LMS_run[l] = np.sum((y_real - y_LMS) ** 2) ** 0.5
+            error_pseudo_inv_run[l] = (np.mean(y_real - y_pseudo_inverse) ** 2) ** 0.5
+            error_LMS_run[l] = (np.mean(y_real - y_LMS) ** 2) ** 0.5
             SNR_run[l] = SNR_current
             bar.update((i + 1) * (l + 1))
 
@@ -253,12 +253,59 @@ def main():
     plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
     plt.grid(b=True, which='minor', color='k', linestyle='--')
     plt.xlabel('Batch size')
-    plt.ylabel('Root Mean Square Error')
+    plt.ylabel('Mean Root Mean Square Error')
     plt.show()
+
+    # change n sample mode
+    n_vec = [d / 1000, d / 100, d / 10, d/5, d/2]
+
+    error_LMS = np.zeros((len(n_vec), 1))
+    error_pseudo_inv = np.zeros((len(n_vec), 1))
+    SNR = np.zeros((len(n_vec), 1))
+    error_LMS_run = np.zeros((num_runs, 1))
+    error_pseudo_inv_run = np.zeros((num_runs, 1))
+    SNR_run = np.zeros((num_runs, 1))
+
+    # Progressbar
+    widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
+    max_val = len(n_vec) * num_runs
+    bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+    for i in range(len(n_vec)):
+        n_current = int(n_vec[i])
+        for l in range(num_runs):
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n_current, k, noise_amp=1)
+            error_pseudo_inv_run[l] = (np.mean(y_real - y_pseudo_inverse) ** 2) ** 0.5
+            error_LMS_run[l] = (np.mean(y_real - y_LMS) ** 2) ** 0.5
+            SNR_run[l] = SNR_current
+            bar.update((i + 1) * (l + 1))
+
+        error_pseudo_inv[i] = np.mean(error_pseudo_inv_run)
+        error_LMS[i] = np.mean(error_LMS_run)
+        SNR[i] = np.mean(SNR_run)
+        print('iteration: ' + str(i))
+    bar.finish()
+
+    # plotting the n samples results
+    plt.figure()
+    plt.plot(n_vec, error_LMS, 'g')
+    plt.plot(n_vec, error_pseudo_inv, 'b')
+    plt.legend(('weights LMS', 'weights pseudo inverse'),
+               loc='best')
+    plt.title('Errors as function of #samples')
+    plt.minorticks_on()
+    plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    plt.grid(b=True, which='minor', color='k', linestyle='--')
+    plt.xlabel('# samples')
+    plt.ylabel('Mean Root Mean Square Error')
+    plt.show()
+
 
     print('Error y LMS mean:' + str(np.mean(error_LMS)))
     print('Error y pseudo inverse mean:' + str(np.mean(error_pseudo_inv)))
     print('done')
+
+
+
 
 
 if __name__ == '__main__':
