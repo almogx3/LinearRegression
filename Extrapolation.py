@@ -117,6 +117,7 @@ def projection(x, k, eigenvectors):
 
     return projcetion_x, eigenvectors_current
 
+def train(d, n, k, noise_amp=1, batch_size=1):
 
 def create_n_calc_all_data(d, n, k, noise_amp=1, batch_size=1):
     """
@@ -166,72 +167,72 @@ def main():
 
     # different SNR mode
     num_SNR = 10
-    # noise_amp_vec = np.concatenate([np.arange(num_SNR), np.arange(num_SNR) * 10])
-    # noise_amp_vec += np.ones_like(noise_amp_vec)
-    noise_amp_vec = [1, 10, 100, 1000]
-    #
-    # RMSE_LMS = np.zeros((len(noise_amp_vec), 1))
-    # RMSE_pseudo_inv = np.zeros((len(noise_amp_vec), 1))
-    # RMSE_LMS_run = np.zeros((num_runs, 1))
-    # RMSE_pseudo_inv_run = np.zeros((num_runs, 1))
-    # SNR = np.zeros((len(noise_amp_vec), 1))
-    # MAE_LMS = np.zeros((len(noise_amp_vec), 1))
-    # MAE_pseudo_inv = np.zeros((len(noise_amp_vec), 1))
-    # MAE_LMS_run = np.zeros((num_runs, 1))
-    # MAE_pseudo_inv_run = np.zeros((num_runs, 1))
-    # SNR_run = np.zeros((num_runs, 1))
-    #
-    # widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
-    # max_val = len(noise_amp_vec) * num_runs
-    # bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
-    # for i in range(len(noise_amp_vec)):
-    #     noise_amp = noise_amp_vec[i]
-    #     for l in range(num_runs):
-    #         y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp)
-    #         RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
-    #         RMSE_LMS_run[l] = np.mean((y_real - y_LMS) ** 2) ** 0.5
-    #         MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
-    #         MAE_pseudo_inv_run[l] = np.mean(np.abs(y_real - y_pseudo_inverse))
-    #
-    #         SNR_run[l] = SNR_current
-    #         bar.update((i + 1) * (l + 1))
-    #
-    #     RMSE_pseudo_inv[i] = np.mean(RMSE_pseudo_inv_run)
-    #     RMSE_LMS[i] = np.mean(RMSE_LMS_run)
-    #     MAE_pseudo_inv[i] = np.mean(MAE_pseudo_inv_run)
-    #     MAE_LMS[i] = np.mean(MAE_LMS_run)
-    #     SNR[i] = np.mean(SNR_run)
-    #     print('iteration: ' + str(i))
-    # bar.finish()
-    #
-    # # sorting by SNR
-    # ind_sort = np.argsort(SNR, axis=0)
-    # # ploting the results SNR
-    # plt.figure()
-    # plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, RMSE_LMS), 'g')
-    # plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, RMSE_pseudo_inv), 'b')
-    # plt.legend(('weights LMS', 'weights pseudo inverse'),
-    #            loc='upper right')
-    # plt.title('RMSEs as function of SNR')
-    # plt.minorticks_on()
-    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
-    # plt.grid(b=True, which='minor', color='k', linestyle='--')
-    # plt.xlabel('SNR [dB]')
-    # plt.ylabel('Mean Root Mean Square RMSE')
-    # plt.show()
-    #
-    # plt.figure()
-    # plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, MAE_LMS), 'g')
-    # plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort,MAE_pseudo_inv), 'b')
-    # plt.legend(('weights LMS', 'weights pseudo inverse'),
-    #            loc='upper right')
-    # plt.title('MAEs as function of SNR')
-    # plt.minorticks_on()
-    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
-    # plt.grid(b=True, which='minor', color='k', linestyle='--')
-    # plt.xlabel('SNR [dB]')
-    # plt.ylabel('Mean Mean Absolute Error MAE ')
-    # plt.show()
+    noise_amp_vec = np.concatenate([np.arange(num_SNR), np.arange(num_SNR) * 10])
+    noise_amp_vec += np.ones_like(noise_amp_vec)
+    # noise_amp_vec = [1, 10, 100, 1000]
+
+    RMSE_LMS = np.zeros((len(noise_amp_vec), 1))
+    RMSE_pseudo_inv = np.zeros((len(noise_amp_vec), 1))
+    RMSE_LMS_run = np.zeros((num_runs, 1))
+    RMSE_pseudo_inv_run = np.zeros((num_runs, 1))
+    SNR = np.zeros((len(noise_amp_vec), 1))
+    MAE_LMS = np.zeros((len(noise_amp_vec), 1))
+    MAE_pseudo_inv = np.zeros((len(noise_amp_vec), 1))
+    MAE_LMS_run = np.zeros((num_runs, 1))
+    MAE_pseudo_inv_run = np.zeros((num_runs, 1))
+    SNR_run = np.zeros((num_runs, 1))
+
+    widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
+    max_val = len(noise_amp_vec) * num_runs
+    bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+    for i in range(len(noise_amp_vec)):
+        noise_amp = noise_amp_vec[i]
+        for l in range(num_runs):
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp)
+            RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
+            RMSE_LMS_run[l] = np.mean((y_real - y_LMS) ** 2) ** 0.5
+            MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
+            MAE_pseudo_inv_run[l] = np.mean(np.abs(y_real - y_pseudo_inverse))
+
+            SNR_run[l] = SNR_current
+            bar.update((i + 1) * (l + 1))
+
+        RMSE_pseudo_inv[i] = np.mean(RMSE_pseudo_inv_run)
+        RMSE_LMS[i] = np.mean(RMSE_LMS_run)
+        MAE_pseudo_inv[i] = np.mean(MAE_pseudo_inv_run)
+        MAE_LMS[i] = np.mean(MAE_LMS_run)
+        SNR[i] = np.mean(SNR_run)
+        print('iteration: ' + str(i))
+    bar.finish()
+
+    # sorting by SNR
+    ind_sort = np.argsort(SNR, axis=0)
+    # ploting the results SNR
+    plt.figure()
+    plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, RMSE_LMS), 'g')
+    plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, RMSE_pseudo_inv), 'b')
+    plt.legend(('weights LMS', 'weights pseudo inverse'),
+               loc='upper right')
+    plt.title('RMSEs as function of SNR')
+    plt.minorticks_on()
+    plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    plt.grid(b=True, which='minor', color='k', linestyle='--')
+    plt.xlabel('SNR [dB]')
+    plt.ylabel('Mean Root Mean Square RMSE')
+    plt.show()
+
+    plt.figure()
+    plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, MAE_LMS), 'g')
+    plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort,MAE_pseudo_inv), 'b')
+    plt.legend(('weights LMS', 'weights pseudo inverse'),
+               loc='upper right')
+    plt.title('MAEs as function of SNR')
+    plt.minorticks_on()
+    plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    plt.grid(b=True, which='minor', color='k', linestyle='--')
+    plt.xlabel('SNR [dB]')
+    plt.ylabel('Mean Mean Absolute Error MAE ')
+    plt.show()
 
 
 
@@ -365,7 +366,8 @@ def main():
     # plt.show()
 
     # effective dimension mode
-    k_vec = np.arange(15) + 5
+    # k_vec = np.arange(15) + 5
+    k_vec = [d/500, d/100, d/50, d/10, d/5, d/2]
 
     RMSE_LMS = np.zeros((len(k_vec), 1))
     RMSE_pseudo_inv = np.zeros((len(k_vec), 1))
