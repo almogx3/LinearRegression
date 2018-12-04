@@ -117,7 +117,54 @@ def projection(x, k, eigenvectors):
 
     return projcetion_x, eigenvectors_current
 
+
 def train(d, n, k, noise_amp=1, batch_size=1):
+    """
+    train function create data fits to d, n, k, noise amp,
+    and trains it using LMS and pseudo inverse (PI) method
+    using batch size
+    :param d: dimension of vector x (x = [1,x(d dimension)])
+    :param n: number of wanted vectors
+    :param k: the effective dimension of x
+    :param noise_amp: amplitude of the noise added to y (optional)
+    :param batch_size: batch size for LMS process (optional)
+    :return: trained weights and SNR
+            weights_LMS: trained weights using LMS method
+            weights_PI: trained weights using pseudo inverse method
+            SNR: SNR of the train data (fits to noise_amp)
+    """
+    R = create_cov_matrix(d, k)
+    x, y = create_random_vectors(n, R, np.zeros((d,)))
+    y_real = y
+    y = y + noise_amp * np.random.rand(y.shape[0], )
+    SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
+    weights_LMS = LMSprocess(x, y, batch_size=batch_size)
+    weights_PI = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
+
+    return weights_LMS, weights_PI, SNR
+
+
+def test(d, n, k, weights_LMS, weights_PI):
+    """
+    test function creates test data and test weights of LMS and Pseudo inverse algorithm
+    :param d:dimension of vector x (x = [1,x(d dimension)])
+    :param n: number of wanted vectors
+    :param k: the effective dimension of x
+    :param weights_LMS: weights of the train data using LMS method
+    :param weights_PI: weights of the train data using pseudo inverse (PI) method
+    :return:
+            RMSE_LMS: RMSE (root mean square error) of LMS method
+            RMSE_PI: RMSE (root mean square error) of pseudo inverse method
+    """
+    R = create_cov_matrix(d, k)
+    x, y = create_random_vectors(n, R, np.zeros((d,)))
+    y_PI = np.matmul(x.T, weights_PI)
+    y_LMS = np.matmul(x.T, weights_LMS)
+    RMSE_LMS = np.mean((y - y_LMS) ** 2) ** 0.5
+    RMSE_PI = np.mean((y - y_PI) ** 2) ** 0.5
+
+    return RMSE_LMS, RMSE_PI
+
 
 def create_n_calc_all_data(d, n, k, noise_amp=1, batch_size=1):
     """
@@ -138,22 +185,62 @@ def create_n_calc_all_data(d, n, k, noise_amp=1, batch_size=1):
     y = y + noise_amp * np.random.rand(y.shape[0], )
     SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
     weights = LMSprocess(x, y, batch_size=batch_size)
-    weights_real = LMSprocess(x, y_real, batch_size=batch_size)
-    # run PCA process
-    eigenvalues_sorted, eigenvectors_sorted, S = PCAprocess(x)
-    projcetion_x, eigenvectors_k = projection(x, k, eigenvectors_sorted)
-    weights_projection_PCA = LMSprocess(projcetion_x, y, batch_size=batch_size)
-    weights_PCA = np.matmul(eigenvectors_k, weights_projection_PCA)
-
     theta_at = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
     y_pseudo_inverse = np.matmul(x.T, theta_at)
     y_LMS = np.matmul(x.T, weights)
-    # y_LMS_real - results for data without noise
-    y_LMS_real = np.matmul(x.T, weights_real)
+
     return y_real, y_LMS, y_pseudo_inverse, SNR
 
 
-def main():
+def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
+    """
+    SNR_mode function running train for data with different SNR (fits to noise_amp)
+    :param d:
+    :param n:
+    :param k:
+    :param noise_amp_vec:
+    :param num_runs:
+    :param batch_size:
+    :return:
+    """
+    # definitions
+    RMSE_LMS = np.zeros((len(noise_amp_vec), 1))
+    RMSE_PI = np.zeros((len(noise_amp_vec), 1))
+
+    RMSE_LMS_run = np.zeros((num_runs, 1))
+    RMSE_PI_run = np.zeros((num_runs, 1))
+
+    SNR = np.zeros((len(noise_amp_vec), 1))
+    SNR_run = np.zeros((num_runs, 1))
+
+    widgets = ['Processing estimation SNR mode: ', Percentage(), ' ', Bar()]
+    max_val = len(noise_amp_vec) * num_runs
+    bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+
+    for i in range(len(noise_amp_vec)):
+        noise_amp = noise_amp_vec[i]
+        for l in range(num_runs):
+            weights_LMS, weights_PI, SNR_run[l] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size)
+            RMSE_LMS_run[l], RMSE_PI_run[l] = test(d, n, k, weights_LMS, weights_PI)
+            bar.update(i * num_runs + (l + 1))
+        RMSE_PI[i] = np.mean(RMSE_PI_run)
+        RMSE_LMS[i] = np.mean(RMSE_LMS_run)
+        SNR[i] = np.mean(SNR_run)
+
+        print('iteration: ' + str(i))
+
+
+    # sorting by SNR
+    ind_sort = np.argsort(SNR, axis=0)
+    SNR_sorted = np.choose(ind_sort, SNR)
+    RMSE_LMS_sorted = np.choose(ind_sort, RMSE_LMS)
+    RMSE_PI_sorted = np.choose(ind_sort, RMSE_PI)
+
+    bar.finish()
+
+    return SNR_sorted, RMSE_LMS_sorted, RMSE_LMS_sorted
+
+def old_main():
     plt.interactive(True)
     # x dimensions
     d = 1000
@@ -163,7 +250,6 @@ def main():
     k = 10
     # number of runs
     num_runs = 10
-
 
     # different SNR mode
     num_SNR = 10
@@ -223,7 +309,7 @@ def main():
 
     plt.figure()
     plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, MAE_LMS), 'g')
-    plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort,MAE_pseudo_inv), 'b')
+    plt.plot(np.choose(ind_sort, SNR), np.choose(ind_sort, MAE_pseudo_inv), 'b')
     plt.legend(('weights LMS', 'weights pseudo inverse'),
                loc='upper right')
     plt.title('MAEs as function of SNR')
@@ -233,8 +319,6 @@ def main():
     plt.xlabel('SNR [dB]')
     plt.ylabel('Mean Mean Absolute Error MAE ')
     plt.show()
-
-
 
     # batch size mode
     batch_size = [1, 2, 5, 10, 50]
@@ -303,7 +387,7 @@ def main():
     #
 
     # change n sample mode
-    n_vec = [d / 1000, d/500, d/250, d / 100, d/50, d/25, d / 10, d/5, d/2]
+    n_vec = [d / 1000, d / 500, d / 250, d / 100, d / 50, d / 25, d / 10, d / 5, d / 2]
 
     # RMSE_LMS = np.zeros((len(n_vec), 1))
     # RMSE_pseudo_inv = np.zeros((len(n_vec), 1))
@@ -367,7 +451,7 @@ def main():
 
     # effective dimension mode
     # k_vec = np.arange(15) + 5
-    k_vec = [d/500, d/100, d/50, d/10, d/5, d/2]
+    k_vec = [d / 500, d / 100, d / 50, d / 10, d / 5, d / 2]
 
     RMSE_LMS = np.zeros((len(k_vec), 1))
     RMSE_pseudo_inv = np.zeros((len(k_vec), 1))
@@ -387,7 +471,7 @@ def main():
     for i in range(len(k_vec)):
         k_current = k_vec[i]
         for l in range(num_runs):
-            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k= k_current, noise_amp=1,
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k=k_current, noise_amp=1,
                                                                                   batch_size=5)
             RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
             MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
@@ -431,13 +515,21 @@ def main():
     plt.ylabel('Mean Mean Absolute Error MAE ')
     plt.show()
 
-
     print('RMSE y LMS mean:' + str(np.mean(RMSE_LMS)))
     print('RMSE y pseudo inverse mean:' + str(np.mean(RMSE_pseudo_inv)))
     print('done')
 
 
-
+def main():
+    plt.interactive(True)
+    # x dimensions
+    d = 1000
+    # number of samples
+    n = 100
+    # The "real dimension
+    k = 10
+    # number of runs
+    num_runs = 10
 
 
 if __name__ == '__main__':
