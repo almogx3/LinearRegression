@@ -237,27 +237,156 @@ def main():
 
     # batch size mode
     batch_size = [1, 2, 5, 10, 50]
+    #
+    # RMSE_LMS = np.zeros((len(batch_size), 1))
+    # RMSE_pseudo_inv = np.zeros((len(batch_size), 1))
+    # SNR = np.zeros((len(batch_size), 1))
+    # RMSE_LMS_run = np.zeros((num_runs, 1))
+    # RMSE_pseudo_inv_run = np.zeros((num_runs, 1))
+    # SNR_run = np.zeros((num_runs, 1))
+    # MAE_LMS = np.zeros((len(batch_size), 1))
+    # MAE_pseudo_inv = np.zeros((len(batch_size), 1))
+    # MAE_LMS_run = np.zeros((num_runs, 1))
+    # MAE_pseudo_inv_run = np.zeros((num_runs, 1))
+    #
+    # # Progressbar
+    # widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
+    # max_val = len(batch_size) * num_runs
+    # bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+    # for i in range(len(batch_size)):
+    #     batch_size_current = batch_size[i]
+    #     for l in range(num_runs):
+    #         y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp=1,
+    #                                                                               batch_size=batch_size_current)
+    #         RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
+    #         MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
+    #         MAE_pseudo_inv_run[l] = np.mean(np.abs(y_real - y_pseudo_inverse))
+    #         RMSE_LMS_run[l] = np.mean((y_real - y_LMS) ** 2) ** 0.5
+    #         SNR_run[l] = SNR_current
+    #         bar.update((i + 1) * (l + 1))
+    #
+    #     RMSE_pseudo_inv[i] = np.mean(RMSE_pseudo_inv_run)
+    #     RMSE_LMS[i] = np.mean(RMSE_LMS_run)
+    #     MAE_pseudo_inv[i] = np.mean(MAE_pseudo_inv_run)
+    #     MAE_LMS[i] = np.mean(MAE_LMS_run)
+    #
+    #     print('iteration: ' + str(i))
+    # bar.finish()
+    #
+    # # plotting the batch size results
+    # plt.figure()
+    # plt.plot(batch_size, RMSE_LMS, 'g')
+    # plt.plot(batch_size, RMSE_pseudo_inv, 'b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'),
+    #            loc='upper right')
+    # plt.title('RMSEs as function of batch size')
+    # plt.minorticks_on()
+    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    # plt.grid(b=True, which='minor', color='k', linestyle='--')
+    # plt.xlabel('Batch size')
+    # plt.ylabel('Mean Root Mean Square RMSE')
+    # plt.show()
+    #
+    # plt.figure()
+    # plt.plot(batch_size, MAE_LMS, 'g')
+    # plt.plot(batch_size, MAE_pseudo_inv, 'b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'),
+    #            loc='upper right')
+    # plt.title('MAEs as function of batch size')
+    # plt.minorticks_on()
+    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    # plt.grid(b=True, which='minor', color='k', linestyle='--')
+    # plt.xlabel('Batch size')
+    # plt.ylabel('Mean Mean Absolute Error MAE ')
+    # plt.show()
+    #
 
-    RMSE_LMS = np.zeros((len(batch_size), 1))
-    RMSE_pseudo_inv = np.zeros((len(batch_size), 1))
-    SNR = np.zeros((len(batch_size), 1))
+    # change n sample mode
+    n_vec = [d / 1000, d/500, d/250, d / 100, d/50, d/25, d / 10, d/5, d/2]
+
+    # RMSE_LMS = np.zeros((len(n_vec), 1))
+    # RMSE_pseudo_inv = np.zeros((len(n_vec), 1))
+    # SNR = np.zeros((len(n_vec), 1))
+    # RMSE_LMS_run = np.zeros((num_runs, 1))
+    # RMSE_pseudo_inv_run = np.zeros((num_runs, 1))
+    # SNR_run = np.zeros((num_runs, 1))
+    # MAE_LMS = np.zeros((len(n_vec), 1))
+    # MAE_pseudo_inv = np.zeros((len(n_vec), 1))
+    # MAE_LMS_run = np.zeros((num_runs, 1))
+    # MAE_pseudo_inv_run = np.zeros((num_runs, 1))
+    #
+    # # Progressbar
+    # widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
+    # max_val = len(n_vec) * num_runs
+    # bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+    # for i in range(len(n_vec)):
+    #     n_current = int(n_vec[i])
+    #     for l in range(num_runs):
+    #         y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n_current, k, noise_amp=1)
+    #         RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
+    #         MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
+    #         MAE_pseudo_inv_run[l] = np.mean(np.abs(y_real - y_pseudo_inverse))
+    #         RMSE_LMS_run[l] = np.mean((y_real - y_LMS) ** 2) ** 0.5
+    #         SNR_run[l] = SNR_current
+    #         bar.update((i + 1) * (l + 1))
+    #
+    #     RMSE_pseudo_inv[i] = np.mean(RMSE_pseudo_inv_run)
+    #     RMSE_LMS[i] = np.mean(RMSE_LMS_run)
+    #     MAE_pseudo_inv[i] = np.mean(MAE_pseudo_inv_run)
+    #     MAE_LMS[i] = np.mean(MAE_LMS_run)
+    #     print('iteration: ' + str(i))
+    # bar.finish()
+    #
+    # # plotting the n samples results
+    # plt.figure()
+    # plt.plot(n_vec, RMSE_LMS, 'g')
+    # plt.plot(n_vec, RMSE_pseudo_inv, 'b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'),
+    #            loc='best')
+    # plt.title('RMSEs as function of #samples')
+    # plt.minorticks_on()
+    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    # plt.grid(b=True, which='minor', color='k', linestyle='--')
+    # plt.xlabel('# samples')
+    # plt.ylabel('Mean Root Mean Square RMSE')
+    # plt.show()
+    #
+    # plt.figure()
+    # plt.plot(n_vec, MAE_LMS, 'g')
+    # plt.plot(n_vec, MAE_pseudo_inv, 'b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'),
+    #            loc='best')
+    # plt.title('MAEs as function of #samples')
+    # plt.minorticks_on()
+    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
+    # plt.grid(b=True, which='minor', color='k', linestyle='--')
+    # plt.xlabel('# samples')
+    # plt.ylabel('Mean Mean Absolute Error MAE')
+    # plt.show()
+
+    # effective dimension mode
+    k_vec = np.arange(15) + 5
+
+    RMSE_LMS = np.zeros((len(k_vec), 1))
+    RMSE_pseudo_inv = np.zeros((len(k_vec), 1))
+    SNR = np.zeros((len(k_vec), 1))
     RMSE_LMS_run = np.zeros((num_runs, 1))
     RMSE_pseudo_inv_run = np.zeros((num_runs, 1))
     SNR_run = np.zeros((num_runs, 1))
-    MAE_LMS = np.zeros((len(batch_size), 1))
-    MAE_pseudo_inv = np.zeros((len(batch_size), 1))
+    MAE_LMS = np.zeros((len(k_vec), 1))
+    MAE_pseudo_inv = np.zeros((len(k_vec), 1))
     MAE_LMS_run = np.zeros((num_runs, 1))
     MAE_pseudo_inv_run = np.zeros((num_runs, 1))
 
     # Progressbar
     widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
-    max_val = len(batch_size) * num_runs
+    max_val = len(k_vec) * num_runs
     bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
-    for i in range(len(batch_size)):
-        batch_size_current = batch_size[i]
+    for i in range(len(k_vec)):
+        k_current = k_vec[i]
         for l in range(num_runs):
-            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp=1,
-                                                                                  batch_size=batch_size_current)
+            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k= k_current, noise_amp=1,
+                                                                                  batch_size=5)
             RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
             MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
             MAE_pseudo_inv_run[l] = np.mean(np.abs(y_real - y_pseudo_inverse))
@@ -275,93 +404,29 @@ def main():
 
     # plotting the batch size results
     plt.figure()
-    plt.plot(batch_size, RMSE_LMS, 'g')
-    plt.plot(batch_size, RMSE_pseudo_inv, 'b')
+    plt.plot(k_vec, RMSE_LMS, 'g')
+    plt.plot(k_vec, RMSE_pseudo_inv, 'b')
     plt.legend(('weights LMS', 'weights pseudo inverse'),
                loc='upper right')
-    plt.title('RMSEs as function of batch size')
+    plt.title('RMSEs as function of effective dimension')
     plt.minorticks_on()
     plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
     plt.grid(b=True, which='minor', color='k', linestyle='--')
-    plt.xlabel('Batch size')
+    plt.xlabel('Effective dimension')
     plt.ylabel('Mean Root Mean Square RMSE')
     plt.show()
 
     plt.figure()
-    plt.plot(batch_size, MAE_LMS, 'g')
-    plt.plot(batch_size, MAE_pseudo_inv, 'b')
+    plt.plot(k_vec, MAE_LMS, 'g')
+    plt.plot(k_vec, MAE_pseudo_inv, 'b')
     plt.legend(('weights LMS', 'weights pseudo inverse'),
                loc='upper right')
-    plt.title('MAEs as function of batch size')
+    plt.title('MAEs as function of effective dimension')
     plt.minorticks_on()
     plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
     plt.grid(b=True, which='minor', color='k', linestyle='--')
-    plt.xlabel('Batch size')
+    plt.xlabel('Effective dimension')
     plt.ylabel('Mean Mean Absolute Error MAE ')
-    plt.show()
-
-
-    # change n sample mode
-    n_vec = [d / 1000, d / 100, d / 10, d/5, d/2]
-
-    RMSE_LMS = np.zeros((len(n_vec), 1))
-    RMSE_pseudo_inv = np.zeros((len(n_vec), 1))
-    SNR = np.zeros((len(n_vec), 1))
-    RMSE_LMS_run = np.zeros((num_runs, 1))
-    RMSE_pseudo_inv_run = np.zeros((num_runs, 1))
-    SNR_run = np.zeros((num_runs, 1))
-    MAE_LMS = np.zeros((len(n_vec), 1))
-    MAE_pseudo_inv = np.zeros((len(n_vec), 1))
-    MAE_LMS_run = np.zeros((num_runs, 1))
-    MAE_pseudo_inv_run = np.zeros((num_runs, 1))
-
-    # Progressbar
-    widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
-    max_val = len(n_vec) * num_runs
-    bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
-    for i in range(len(n_vec)):
-        n_current = int(n_vec[i])
-        for l in range(num_runs):
-            y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n_current, k, noise_amp=1)
-            RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
-            MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
-            MAE_pseudo_inv_run[l] = np.mean(np.abs(y_real - y_pseudo_inverse))
-            RMSE_LMS_run[l] = np.mean((y_real - y_LMS) ** 2) ** 0.5
-            SNR_run[l] = SNR_current
-            bar.update((i + 1) * (l + 1))
-
-        RMSE_pseudo_inv[i] = np.mean(RMSE_pseudo_inv_run)
-        RMSE_LMS[i] = np.mean(RMSE_LMS_run)
-        MAE_pseudo_inv[i] = np.mean(MAE_pseudo_inv_run)
-        MAE_LMS[i] = np.mean(MAE_LMS_run)
-        print('iteration: ' + str(i))
-    bar.finish()
-
-    # plotting the n samples results
-    plt.figure()
-    plt.plot(n_vec, RMSE_LMS, 'g')
-    plt.plot(n_vec, RMSE_pseudo_inv, 'b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'),
-               loc='best')
-    plt.title('RMSEs as function of #samples')
-    plt.minorticks_on()
-    plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
-    plt.grid(b=True, which='minor', color='k', linestyle='--')
-    plt.xlabel('# samples')
-    plt.ylabel('Mean Root Mean Square RMSE')
-    plt.show()
-
-    plt.figure()
-    plt.plot(n_vec, MAE_LMS, 'g')
-    plt.plot(n_vec, MAE_pseudo_inv, 'b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'),
-               loc='best')
-    plt.title('MAEs as function of #samples')
-    plt.minorticks_on()
-    plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
-    plt.grid(b=True, which='minor', color='k', linestyle='--')
-    plt.xlabel('# samples')
-    plt.ylabel('Mean Mean Absolute Error MAE')
     plt.show()
 
 
