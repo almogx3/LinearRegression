@@ -195,13 +195,17 @@ def create_n_calc_all_data(d, n, k, noise_amp=1, batch_size=1):
 def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
     """
     SNR_mode function running train for data with different SNR (fits to noise_amp)
-    :param d:
-    :param n:
-    :param k:
-    :param noise_amp_vec:
-    :param num_runs:
-    :param batch_size:
+    and returns SNR of the trained data and RMSE of LMS and pseudo inverse method
+    :param d:dimension of vector x (x = [1,x(d dimension)])
+    :param n: number of wanted vectors
+    :param k: the effective dimension of x
+    :param noise_amp_vec: vector of noise amplitudes that added to y
+    :param num_runs: num of times to run the test algorithm (optional)
+    :param batch_size: batch size for LMS process
     :return:
+            SNR_sorted: SNR of the train data
+            RMSE_LMS_sorted: RMSE (root mean square error) of test data using LMS method
+            RMSE_PI_sorted: RMSE (root mean square error) of test data using pseudo inverse method
     """
     # definitions
     RMSE_LMS = np.zeros((len(noise_amp_vec), 1))
@@ -219,16 +223,15 @@ def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
 
     for i in range(len(noise_amp_vec)):
         noise_amp = noise_amp_vec[i]
+        weights_LMS, weights_PI, SNR[i] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size)
         for l in range(num_runs):
-            weights_LMS, weights_PI, SNR_run[l] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size)
             RMSE_LMS_run[l], RMSE_PI_run[l] = test(d, n, k, weights_LMS, weights_PI)
             bar.update(i * num_runs + (l + 1))
         RMSE_PI[i] = np.mean(RMSE_PI_run)
         RMSE_LMS[i] = np.mean(RMSE_LMS_run)
-        SNR[i] = np.mean(SNR_run)
+        # SNR[i] = np.mean(SNR_run)
 
         print('iteration: ' + str(i))
-
 
     # sorting by SNR
     ind_sort = np.argsort(SNR, axis=0)
@@ -238,7 +241,7 @@ def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
 
     bar.finish()
 
-    return SNR_sorted, RMSE_LMS_sorted, RMSE_LMS_sorted
+    return SNR_sorted, RMSE_LMS_sorted, RMSE_PI_sorted
 
 def old_main():
     plt.interactive(True)
