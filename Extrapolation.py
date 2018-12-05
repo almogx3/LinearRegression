@@ -38,54 +38,32 @@ def create_random_vectors(num_of_vectors=100, cov_matrix=np.eye(100), mean=np.ze
     return x, y
 
 
-def LMSprocess(x, y, batch_size=1):
+def LMS(x, y, step=1, weights=None, eps_value=5e-3):
     """
-    LMSprocess run LMS process on x,y
+    LMS runs LMS algorithm one time on x,y
     :param x: training vectors
     :param y: desired answer
-    :param batch_size: batch size for calculating RMSE in LMS
-    :return: weights according to LMS process
+    :param step: step size (filter length)
+    :param weights: starting point for weights (optional)
+    :param eps_value: weights step size (changing weights each time with error*eps_value)
+    :return: weights: final weights from LMS process
     """
-    eps_value = 5e-3
-    error_change_stop = 0.01
-    error_change_max = 0.5
-    weights = np.random.rand(x.shape[0], ) * np.max(y)
-    error_mean_old = np.Inf
-    Emax = 100 * len(y)
-    maxIter = 100
-    flag_stop = 0
-    i = 0
+    if weights is None:
+        weights = np.zeros((x.shape[0],))
+    for ind in np.arange(0, len(y), step):
+        x_current = x[:, ind:(ind + step)]
+        error_current = y[ind:(ind + step)] - np.matmul(x_current.T, weights)
+        error_eps = (error_current * eps_value)
+        weights = weights + np.dot(x_current, error_eps)
 
-    while ((i < maxIter)and not flag_stop):
-        for ind in range(len(y) - batch_size + 1):
-            x_current = x[:, ind:(ind + batch_size)]
-            error_current = y[ind:(ind + batch_size)] - np.matmul(x_current.T, weights)
-            error_mean_current = np.mean((y - np.matmul(x.T, weights)) ** 2) ** 0.5
-            error_change = abs(error_mean_current - error_mean_old) / error_mean_current
-            # if error_change <= error_change_stop:
-            #     flag_stop = 1
-            #     print('converged at '+str(ind))
-            #     break
-            if ((error_mean_current > Emax) or ((error_change > error_change_max) and (error_mean_old!=np.Inf ))):
-                weights = np.random.rand(x.shape[0], )
-                error_mean_old = np.Inf
-                i = 0
-                print('new weights')
-            else:
-                error_eps = (error_current * eps_value)
-                weights = weights + np.dot(x_current, error_eps) / len(error_eps)
+    return weights
 
-            error_mean_old = error_mean_current
-        i += 1
-        if error_change <= error_change_stop:
-            flag_stop = 1
-            print('converged at ' + str(ind))
-            break
-        if i == maxIter:
-            if error_change <= error_change_stop:
-                break
-            print('maxIter')
 
+def LMS_multiple_times(x, y, step=1, eps_value=5e-3, num_runs=1):
+    weights = LMS(x, y, step=step, eps_value=eps_value)
+    for counts in range(num_runs - 1):
+        weights = LMS(x, y, step=step, weights=weights, eps_value=eps_value)
+    #     option to change for to while and add converge condition (using error or weights change)
     return weights
 
 
@@ -148,7 +126,7 @@ def train(d, n, k, noise_amp=1, batch_size=1):
     y_real = y
     y = y + noise_amp * np.random.rand(y.shape[0], )
     SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
-    weights_LMS = LMSprocess(x, y, batch_size=batch_size)
+    weights_LMS = LMS_multiple_times(x, y, step=batch_size, num_runs=1)
     weights_PI = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
 
     return weights_LMS, weights_PI, SNR
@@ -174,32 +152,6 @@ def test(d, n, k, weights_LMS, weights_PI):
     RMSE_PI = np.mean((y - y_PI) ** 2) ** 0.5
 
     return RMSE_LMS, RMSE_PI
-
-
-def create_n_calc_all_data(d, n, k, noise_amp=1, batch_size=1):
-    """
-
-    :param d: dimension of vector x (x = [1,x(d dimension)])
-    :param n: number of wanted vectors
-    :param k: the effective dimension of x
-    :param noise_amp: amplitude of the noise added to y
-    :param batch_size: batch size for LMS process
-    :return:  y_real - the real y without noise
-              y_LMS - estimation of y after noising using LMS
-              y_pseudo_inverse - estimation of y after noising using pseudo inverse
-              SNR - SNR of y
-    """
-    R = create_cov_matrix(d, k)
-    x, y = create_random_vectors(n, R, np.zeros((d,)))
-    y_real = y
-    y = y + noise_amp * np.random.rand(y.shape[0], )
-    SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
-    weights = LMSprocess(x, y, batch_size=batch_size)
-    theta_at = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
-    y_pseudo_inverse = np.matmul(x.T, theta_at)
-    y_LMS = np.matmul(x.T, weights)
-
-    return y_real, y_LMS, y_pseudo_inverse, SNR
 
 
 def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
@@ -337,7 +289,6 @@ def main():
          ylabel='Mean Root Mean Square RMSE')
     plt.plot(SNR, RMSE_PI_SNR, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
-
 
     # batch size mode
     batch_size = [1, 2, 5, 10, 50, 100]
