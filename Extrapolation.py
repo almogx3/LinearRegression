@@ -47,34 +47,43 @@ def LMSprocess(x, y, batch_size=1):
     :return: weights according to LMS process
     """
     eps_value = 5e-3
+    error_change_stop = 0.01
+    error_change_max = 0.5
     weights = np.random.rand(x.shape[0], ) * np.max(y)
     error_mean_old = np.Inf
     Emax = 100 * len(y)
-    maxIter = 2000
+    maxIter = 100
+    flag_stop = 0
     i = 0
-    while ((i < maxIter)):
+
+    while ((i < maxIter)and not flag_stop):
         for ind in range(len(y) - batch_size + 1):
             x_current = x[:, ind:(ind + batch_size)]
             error_current = y[ind:(ind + batch_size)] - np.matmul(x_current.T, weights)
             error_mean_current = np.mean((y - np.matmul(x.T, weights)) ** 2) ** 0.5
-            if ((error_mean_current > Emax) or (abs(error_mean_current) > 1.1 * abs(error_mean_old))):
+            error_change = abs(error_mean_current - error_mean_old) / error_mean_current
+            # if error_change <= error_change_stop:
+            #     flag_stop = 1
+            #     print('converged at '+str(ind))
+            #     break
+            if ((error_mean_current > Emax) or ((error_change > error_change_max) and (error_mean_old!=np.Inf ))):
                 weights = np.random.rand(x.shape[0], )
                 error_mean_old = np.Inf
                 i = 0
                 print('new weights')
             else:
                 error_eps = (error_current * eps_value)
-                # error_eps = error_eps.reshape((error_eps.shape[0],1))
                 weights = weights + np.dot(x_current, error_eps) / len(error_eps)
 
-            if (abs(error_mean_current) == abs(error_mean_old)):
-                i = maxIter + 5
-                break
-                print('Saturation')
             error_mean_old = error_mean_current
         i += 1
+        if error_change <= error_change_stop:
+            flag_stop = 1
+            print('converged at ' + str(ind))
+            break
         if i == maxIter:
-            abs(error_mean_current - error_mean_old)/error_mean_current
+            if error_change <= error_change_stop:
+                break
             print('maxIter')
 
     return weights
