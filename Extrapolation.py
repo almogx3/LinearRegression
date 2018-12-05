@@ -1,9 +1,9 @@
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 # from progress.bar import Bar
 # from tqdm import tqdm
 from progressbar import *
-import pickle
 
 
 def create_cov_matrix(d, k):
@@ -41,8 +41,8 @@ def create_random_vectors(num_of_vectors=100, cov_matrix=np.eye(100), mean=np.ze
 def LMS(x, y, step=1, weights=None, eps_value=5e-3):
     """
     LMS runs LMS algorithm one time on x,y
-    :param x: training vectors
-    :param y: desired answer
+    :param x: input signal vector
+    :param y: desired signal vector
     :param step: step size (filter length)
     :param weights: starting point for weights (optional)
     :param eps_value: weights step size (changing weights each time with error*eps_value)
@@ -60,6 +60,16 @@ def LMS(x, y, step=1, weights=None, eps_value=5e-3):
 
 
 def LMS_multiple_times(x, y, step=1, eps_value=5e-3, num_runs=1):
+    """
+    LMS_multiple_times runs LMS process multiple times according to num_runs
+    :param x: input signal vector
+    :param y: desired signal vector
+    :param step: step size (filter length)
+    :param eps_value: weights step size (changing weights each time with error*eps_value)
+    :param num_runs: number if times to run LMS process
+    :return:
+            weights: final weights from LMS process
+    """
     weights = LMS(x, y, step=step, eps_value=eps_value)
     for counts in range(num_runs - 1):
         weights = LMS(x, y, step=step, weights=weights, eps_value=eps_value)
@@ -106,7 +116,7 @@ def projection(x, k, eigenvectors):
     return projcetion_x, eigenvectors_current
 
 
-def train(d, n, k, noise_amp=1, batch_size=1):
+def train(d, n, k, noise_amp=1, batch_size=1, num_runs_LMS=1):
     """
     train function create data fits to d, n, k, noise amp,
     and trains it using LMS and pseudo inverse (PI) method
@@ -116,6 +126,7 @@ def train(d, n, k, noise_amp=1, batch_size=1):
     :param k: the effective dimension of x
     :param noise_amp: amplitude of the noise added to y (optional)
     :param batch_size: batch size for LMS process (optional)
+    :param num_runs_LMS: number of times to run the LMS process (optional)
     :return: trained weights and SNR
             weights_LMS: trained weights using LMS method
             weights_PI: trained weights using pseudo inverse method
@@ -126,7 +137,7 @@ def train(d, n, k, noise_amp=1, batch_size=1):
     y_real = y
     y = y + noise_amp * np.random.rand(y.shape[0], )
     SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
-    weights_LMS = LMS_multiple_times(x, y, step=batch_size, num_runs=1)
+    weights_LMS = LMS_multiple_times(x, y, step=batch_size, num_runs=num_runs_LMS)
     weights_PI = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
 
     return weights_LMS, weights_PI, SNR
@@ -154,7 +165,7 @@ def test(d, n, k, weights_LMS, weights_PI):
     return RMSE_LMS, RMSE_PI
 
 
-def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
+def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, num_runs_LMS=1, batch_size=1):
     """
     SNR_mode function running train for data with different SNR (fits to noise_amp)
     and returns SNR of the trained data and RMSE of LMS and pseudo inverse method
@@ -163,7 +174,8 @@ def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
     :param k: the effective dimension of x
     :param noise_amp_vec: vector of noise amplitudes that added to y
     :param num_runs: num of times to run the test algorithm (optional)
-    :param batch_size: batch size for LMS process
+    :param num_runs_LMS: number of runs of the LMS process (optional)
+    :param batch_size: batch size for LMS process (optional)
     :return:
             SNR_sorted: SNR of the train data
             RMSE_LMS_sorted: RMSE (root mean square error) of test data using LMS method
@@ -185,15 +197,13 @@ def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
 
     for i in range(len(noise_amp_vec)):
         noise_amp = noise_amp_vec[i]
-        weights_LMS, weights_PI, SNR[i] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size)
+        weights_LMS, weights_PI, SNR[i] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
+                                                num_runs_LMS=num_runs_LMS)
         for l in range(num_runs):
             RMSE_LMS_run[l], RMSE_PI_run[l] = test(d, n, k, weights_LMS, weights_PI)
             bar.update(i * num_runs + (l + 1))
         RMSE_PI[i] = np.mean(RMSE_PI_run)
         RMSE_LMS[i] = np.mean(RMSE_LMS_run)
-        # SNR[i] = np.mean(SNR_run)
-
-        print('iteration: ' + str(i))
 
     # sorting by SNR
     ind_sort = np.argsort(SNR, axis=0)
@@ -206,19 +216,20 @@ def SNR_mode(d, n, k, noise_amp_vec, num_runs=1, batch_size=1):
     return SNR_sorted, RMSE_LMS_sorted, RMSE_PI_sorted
 
 
-def Batch_size_mode(d, n, k, batch_size_vec, num_runs=1, noise_amp=1):
+def batch_size_mode(d, n, k, batch_size_vec, num_runs=1, noise_amp=1, num_runs_LMS=1):
     """
-    SNR_mode function running train for data with different SNR (fits to noise_amp)
-    and returns SNR of the trained data and RMSE of LMS and pseudo inverse method
+    batch_size_mode function running train for data with different batch sizes
+    and returns RMSE of LMS and pseudo inverse method
     :param d:dimension of vector x (x = [1,x(d dimension)])
     :param n: number of wanted vectors
     :param k: the effective dimension of x
     :param batch_size_vec: vector of batch size for LMS process
     :param num_runs: num of times to run the test algorithm (optional)
-    :param noise_amp: noise amplitude that added to y
+    :param num_runs_LMS: number of runs of the LMS process (optional)
+    :param noise_amp: noise amplitude that added to y (optional)
     :return:
-            RMSE_LMS_sorted: RMSE (root mean square error) of test data using LMS method
-            RMSE_PI_sorted: RMSE (root mean square error) of test data using pseudo inverse method
+            RMSE_LMS: RMSE (root mean square error) of test data using LMS method
+            RMSE_PI: RMSE (root mean square error) of test data using pseudo inverse method
     """
     # definitions
     RMSE_LMS = np.zeros((len(batch_size_vec), 1))
@@ -236,15 +247,101 @@ def Batch_size_mode(d, n, k, batch_size_vec, num_runs=1, noise_amp=1):
 
     for i in range(len(batch_size_vec)):
         batch_size = batch_size_vec[i]
-        weights_LMS, weights_PI, SNR[i] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size)
+        weights_LMS, weights_PI, SNR[i] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
+                                                num_runs_LMS=num_runs_LMS)
         for l in range(num_runs):
             RMSE_LMS_run[l], RMSE_PI_run[l] = test(d, n, k, weights_LMS, weights_PI)
             bar.update(i * num_runs + (l + 1))
         RMSE_PI[i] = np.mean(RMSE_PI_run)
         RMSE_LMS[i] = np.mean(RMSE_LMS_run)
-        # SNR[i] = np.mean(SNR_run)
 
-        print('iteration: ' + str(i))
+    bar.finish()
+
+    return RMSE_LMS, RMSE_PI
+
+
+def num_LMS_runs_mode(d, n, k, num_runs_LMS_vec, num_runs=1, noise_amp=1, batch_size=1):
+    """
+    num_LMS_runs_mode function running train for data with different number of runs of the LMS process
+    and returns RMSE of LMS and pseudo inverse method
+    :param d:dimension of vector x (x = [1,x(d dimension)])
+    :param n: number of wanted vectors
+    :param k: the effective dimension of x
+    :param num_runs_LMS_vec: vector of number of runs of the LMS process
+    :param num_runs: num of times to run the test algorithm (optional)
+    :param noise_amp: noise amplitude that added to y (optional)
+    :param batch_size: batch size for LMS process (optional)
+    :return:
+            RMSE_LMS: RMSE (root mean square error) of test data using LMS method
+            RMSE_PI: RMSE (root mean square error) of test data using pseudo inverse method
+    """
+    # definitions
+    RMSE_LMS = np.zeros((len(num_runs_LMS_vec), 1))
+    RMSE_PI = np.zeros((len(num_runs_LMS_vec), 1))
+
+    RMSE_LMS_run = np.zeros((num_runs, 1))
+    RMSE_PI_run = np.zeros((num_runs, 1))
+
+    SNR = np.zeros((len(num_runs_LMS_vec), 1))
+
+    widgets = ['Processing estimation num LMS runs mode: ', Percentage(), ' ', Bar()]
+    max_val = len(num_runs_LMS_vec) * num_runs
+    bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+
+    for i in range(len(num_runs_LMS_vec)):
+        num_runs_LMS = num_runs_LMS_vec[i]
+        weights_LMS, weights_PI, SNR[i] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
+                                                num_runs_LMS=num_runs_LMS)
+        for l in range(num_runs):
+            RMSE_LMS_run[l], RMSE_PI_run[l] = test(d, n, k, weights_LMS, weights_PI)
+            bar.update(i * num_runs + (l + 1))
+        RMSE_PI[i] = np.mean(RMSE_PI_run)
+        RMSE_LMS[i] = np.mean(RMSE_LMS_run)
+
+    bar.finish()
+
+    return RMSE_LMS, RMSE_PI
+
+
+def n_samples_mode(d, n_sample_vec, k, num_runs=1, noise_amp=1, batch_size=1, num_runs_LMS=1):
+    """
+    n_samples_mode function running train for data with different numbers of samples
+    and returns RMSE of LMS and pseudo inverse method
+    :param d:dimension of vector x (x = [1,x(d dimension)])
+    :param n_sample_vec: vector of number of wanted samples
+    :param k: the effective dimension of x
+    :param n_sample_vec: vector of n_samples
+    :param num_runs: num of times to run the test algorithm (optional)
+    :param batch_size: batch size for LMS process (optional)
+    :param num_runs_LMS: number of runs of the LMS process (optional)
+    :param noise_amp: noise amplitude that added to y (optional)
+    :return:
+            RMSE_LMS: RMSE (root mean square error) of test data using LMS method
+            RMSE_PI: RMSE (root mean square error) of test data using pseudo inverse method
+    """
+    # definitions
+    RMSE_LMS = np.zeros((len(n_sample_vec), 1))
+    RMSE_PI = np.zeros((len(n_sample_vec), 1))
+
+    RMSE_LMS_run = np.zeros((num_runs, 1))
+    RMSE_PI_run = np.zeros((num_runs, 1))
+
+    SNR = np.zeros((len(n_sample_vec), 1))
+    SNR_run = np.zeros((num_runs, 1))
+
+    widgets = ['Processing estimation number samples mode: ', Percentage(), ' ', Bar()]
+    max_val = len(n_sample_vec) * num_runs
+    bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
+
+    for i in range(len(n_sample_vec)):
+        n = n_sample_vec[i]
+        weights_LMS, weights_PI, SNR[i] = train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
+                                                num_runs_LMS=num_runs_LMS)
+        for l in range(num_runs):
+            RMSE_LMS_run[l], RMSE_PI_run[l] = test(d, n, k, weights_LMS, weights_PI)
+            bar.update(i * num_runs + (l + 1))
+        RMSE_PI[i] = np.mean(RMSE_PI_run)
+        RMSE_LMS[i] = np.mean(RMSE_LMS_run)
 
     bar.finish()
 
@@ -284,88 +381,54 @@ def main():
     noise_amp_vec = [1, 10, 50, 100, 500, 1000, 1500, 2000]
     SNR, RMSE_LMS_SNR, RMSE_PI_SNR = SNR_mode(d, n, k, noise_amp_vec, num_runs=num_runs, batch_size=1)
 
-    # ploting the results SNR
+    # plotting the results SNR
     plot(SNR, RMSE_LMS_SNR, color='g', title='RMSEs as function of SNR', xlabel='SNR [dB]',
          ylabel='Mean Root Mean Square RMSE')
     plt.plot(SNR, RMSE_PI_SNR, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    pickle.dump(plt.gcf(),
+                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\SNR_RMSE.pickle', 'wb'))
 
     # batch size mode
     batch_size = [1, 2, 5, 10, 50, 100]
-    RMSE_LMS_SNR, RMSE_PI_SNR = Batch_size_mode(d, n, k, batch_size_vec=batch_size, num_runs=num_runs, noise_amp=1)
+    RMSE_LMS_batch, RMSE_PI_batch = batch_size_mode(d, n, k, batch_size_vec=batch_size, num_runs=num_runs, noise_amp=5)
 
-    # ploting the results SNR
-    plot(batch_size, RMSE_LMS_SNR, color='g', title='RMSEs as function of Batch size', xlabel='Batch size',
+    # plotting the results batch size
+    plot(batch_size, RMSE_LMS_batch, color='g', title='RMSEs as function of Batch size', xlabel='Batch size',
          ylabel='Mean Root Mean Square RMSE')
-    plt.plot(batch_size, RMSE_PI_SNR, color='b')
+    plt.plot(batch_size, RMSE_PI_batch, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
-    #
-    # RMSE_LMS = np.zeros((len(batch_size), 1))
-    # RMSE_pseudo_inv = np.zeros((len(batch_size), 1))
-    # SNR = np.zeros((len(batch_size), 1))
-    # RMSE_LMS_run = np.zeros((num_runs, 1))
-    # RMSE_pseudo_inv_run = np.zeros((num_runs, 1))
-    # SNR_run = np.zeros((num_runs, 1))
-    # MAE_LMS = np.zeros((len(batch_size), 1))
-    # MAE_pseudo_inv = np.zeros((len(batch_size), 1))
-    # MAE_LMS_run = np.zeros((num_runs, 1))
-    # MAE_pseudo_inv_run = np.zeros((num_runs, 1))
-    #
-    # # Progressbar
-    # widgets = ['Processing estimation: ', Percentage(), ' ', Bar()]
-    # max_val = len(batch_size) * num_runs
-    # bar = ProgressBar(widgets=widgets, maxval=int(max_val)).start()
-    # for i in range(len(batch_size)):
-    #     batch_size_current = batch_size[i]
-    #     for l in range(num_runs):
-    #         y_real, y_LMS, y_pseudo_inverse, SNR_current = create_n_calc_all_data(d, n, k, noise_amp=1,
-    #                                                                               batch_size=batch_size_current)
-    #         RMSE_pseudo_inv_run[l] = np.mean((y_real - y_pseudo_inverse) ** 2) ** 0.5
-    #         MAE_LMS_run[l] = np.mean(np.abs(y_real - y_LMS))
-    #         MAE_pseudo_inv_run[l] = np.mean(np.abs(y_real - y_pseudo_inverse))
-    #         RMSE_LMS_run[l] = np.mean((y_real - y_LMS) ** 2) ** 0.5
-    #         SNR_run[l] = SNR_current
-    #         bar.update((i + 1) * (l + 1))
-    #
-    #     RMSE_pseudo_inv[i] = np.mean(RMSE_pseudo_inv_run)
-    #     RMSE_LMS[i] = np.mean(RMSE_LMS_run)
-    #     MAE_pseudo_inv[i] = np.mean(MAE_pseudo_inv_run)
-    #     MAE_LMS[i] = np.mean(MAE_LMS_run)
-    #
-    #     print('iteration: ' + str(i))
-    # bar.finish()
-    #
-    # # plotting the batch size results
-    # plt.figure()
-    # plt.plot(batch_size, RMSE_LMS, 'g')
-    # plt.plot(batch_size, RMSE_pseudo_inv, 'b')
-    # plt.legend(('weights LMS', 'weights pseudo inverse'),
-    #            loc='upper right')
-    # plt.title('RMSEs as function of batch size')
-    # plt.minorticks_on()
-    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
-    # plt.grid(b=True, which='minor', color='k', linestyle='--')
-    # plt.xlabel('Batch size')
-    # plt.ylabel('Mean Root Mean Square RMSE')
-    # plt.show()
-    #
-    # plt.figure()
-    # plt.plot(batch_size, MAE_LMS, 'g')
-    # plt.plot(batch_size, MAE_pseudo_inv, 'b')
-    # plt.legend(('weights LMS', 'weights pseudo inverse'),
-    #            loc='upper right')
-    # plt.title('MAEs as function of batch size')
-    # plt.minorticks_on()
-    # plt.grid(b=True, which='major', color='k', linestyle='-', linewidth='1.1')
-    # plt.grid(b=True, which='minor', color='k', linestyle='--')
-    # plt.xlabel('Batch size')
-    # plt.ylabel('Mean Mean Absolute Error MAE ')
-    # plt.show()
-    #
+    pickle.dump(plt.gcf(),
+                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\Batch_RMSE.pickle', 'wb'))
+
+    # num of runs LMS
+    num_runs_LMS_vec = list(np.arange(10) + 1)
+    num_runs_LMS_vec.append(50)
+    num_runs_LMS_vec.append(100)
+    num_runs_LMS_vec.append(200)
+    num_runs_LMS_vec.append(500)
+    RMSE_LMS_runs, RMSE_PI_runs = num_LMS_runs_mode(d, n, k, num_runs_LMS_vec=num_runs_LMS_vec, num_runs=num_runs,
+                                                    noise_amp=5, batch_size=1)
+    # plotting the results SNR
+    plot(num_runs_LMS_vec, RMSE_LMS_runs, color='g', title='RMSEs as function of LMS #runs', xlabel='#runs LMS process',
+         ylabel='Mean Root Mean Square RMSE')
+    plt.plot(num_runs_LMS_vec, RMSE_PI_runs, color='b')
+    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    pickle.dump(plt.gcf(),
+                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\N_runs_LMS_RMSE.pickle',
+                     'wb'))
 
     # change n sample mode
     n_vec = [d / 1000, d / 500, d / 250, d / 100, d / 50, d / 25, d / 10, d / 5, d / 2]
-
+    RMSE_n_sample, RMSE_PI_n_sample = n_samples_mode(d, n_vec, k, num_runs=1, noise_amp=5, batch_size=1, num_runs_LMS=1)
+    # plotting the results SNR
+    plot(n_vec, RMSE_n_sample, color='g', title='RMSEs as function of #samples', xlabel='#sample',
+         ylabel='Mean Root Mean Square RMSE')
+    plt.plot(n_vec, RMSE_PI_n_sample, color='b')
+    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    pickle.dump(plt.gcf(),
+                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\N_samples_RMSE.pickle',
+                     'wb'))
     # RMSE_LMS = np.zeros((len(n_vec), 1))
     # RMSE_pseudo_inv = np.zeros((len(n_vec), 1))
     # SNR = np.zeros((len(n_vec), 1))
