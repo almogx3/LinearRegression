@@ -462,7 +462,7 @@ def main():
                      'wb'))
 
     # change n sample mode
-    n_vec = [d / 1000, d / 500, d / 250, d / 100, d / 50, d / 25, d / 10, d / 5, d / 2, d, 2*d]
+    n_vec = [d / 1000, d / 500, d / 250, d / 100, d / 50, d / 25, d / 10, d / 5, d / 2]
     RMSE_n_sample, RMSE_PI_n_sample = n_samples_mode(d, n_vec, k, num_runs=num_runs, noise_amp=5, batch_size=1, num_runs_LMS=1)
     # plotting the results n samples
     plot(n_vec, RMSE_n_sample, color='g', title='RMSEs as function of #samples', xlabel='#sample',
