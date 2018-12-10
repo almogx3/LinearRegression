@@ -28,11 +28,10 @@ class LMS_function_class():
         :param cov_matrix: covariance matrix of vectors
         :param mean: mean vector of the created vectors
         :return: x: random vector matrix dimension (mean dim)X(num_of_vectors)
-                 y: desired result for random vector (1 or 0) size (num_of_vectors)X1
+                 y: desired result for random vector size (num_of_vectors)X1
         """
         x = np.random.multivariate_normal(mean, cov_matrix, num_of_vectors).T
         # x matrix dimension (mean dim)X(num_of_vectors)
-        # y will be if sum(x)>0
         sum_x = np.sum(x, axis=0)
         y = sum_x
         # adding 1 to all x
