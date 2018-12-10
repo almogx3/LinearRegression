@@ -2,8 +2,10 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from progressbar import *
-from ModeFunctions import mode_functions_class as mfc
+from ModeFunctions import mode_functions_class
 
+
+mfc = mode_functions_class()
 
 def PCAprocess(x):
     """

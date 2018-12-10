@@ -80,7 +80,6 @@ class LMS_function_class():
         """
         train function create data fits to d, n, k, noise amp,
         and trains it using LMS and pseudo inverse (PI) method
-        using batch size
         :param d: dimension of vector x (x = [1,x(d dimension)])
         :param n: number of wanted vectors
         :param k: the effective dimension of x

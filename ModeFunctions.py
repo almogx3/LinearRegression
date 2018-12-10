@@ -2,11 +2,13 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from progressbar import *
-from LMSFunctions import LMS_function_class as LMS
+from LMSFunctions import LMS_function_class
 """ModeFunctions.py: Contains all different  mode functions"""
 
 __author__ = "Almog Zer"
 
+
+LMS = LMS_function_class()
 
 class mode_functions_class():
 
