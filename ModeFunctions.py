@@ -12,7 +12,7 @@ LMS = LMS_function_class()
 
 class mode_functions_class():
 
-    def SNR_mode(self, d, n, k, noise_amp_vec, num_runs=1, num_runs_LMS=1, batch_size=1):
+    def SNR_mode(self, d, n, k, noise_amp_vec, num_runs=1, num_runs_LMS=1, batch_size=1, polynomial=0):
         """
         SNR_mode function runs train for data with different SNR (fits to noise_amp)
         and returns SNR of the trained data and RMSE of LMS and pseudo inverse method
@@ -23,6 +23,7 @@ class mode_functions_class():
         :param num_runs: num of times to run the test algorithm (optional)
         :param num_runs_LMS: number of runs of the LMS process (optional)
         :param batch_size: batch size for LMS process (optional)
+        :param polynomial: is it polynomial mode (1) or not (0 - defaulted) (optional)
         :return:
                 SNR_sorted: SNR of the train data
                 RMSE_LMS_sorted: RMSE (root mean square error) of test data using LMS method
@@ -47,7 +48,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                     num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI)
+                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
                 bar.update(i * num_runs + (l + 1))
             RMSE_PI[i] = np.mean(RMSE_PI_run)
             RMSE_LMS[i] = np.mean(RMSE_LMS_run)
@@ -62,7 +63,7 @@ class mode_functions_class():
 
         return SNR_sorted, RMSE_LMS_sorted, RMSE_PI_sorted
 
-    def batch_size_mode(self, d, n, k, batch_size_vec, num_runs=1, noise_amp=1, num_runs_LMS=1):
+    def batch_size_mode(self, d, n, k, batch_size_vec, num_runs=1, noise_amp=1, num_runs_LMS=1, polynomial=0):
         """
         batch_size_mode function runs train for data with different batch sizes
         and returns RMSE of LMS and pseudo inverse method
@@ -73,6 +74,7 @@ class mode_functions_class():
         :param num_runs: num of times to run the test algorithm (optional)
         :param num_runs_LMS: number of runs of the LMS process (optional)
         :param noise_amp: noise amplitude that added to y (optional)
+        :param polynomial: is it polynomial mode (1) or not (0 - defaulted) (optional)
         :return:
                 RMSE_LMS: RMSE (root mean square error) of test data using LMS method
                 RMSE_PI: RMSE (root mean square error) of test data using pseudo inverse method
@@ -96,7 +98,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                     num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI)
+                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
                 bar.update(i * num_runs + (l + 1))
             RMSE_PI[i] = np.mean(RMSE_PI_run)
             RMSE_LMS[i] = np.mean(RMSE_LMS_run)
@@ -105,7 +107,7 @@ class mode_functions_class():
 
         return RMSE_LMS, RMSE_PI
 
-    def num_LMS_runs_mode(self, d, n, k, num_runs_LMS_vec, num_runs=1, noise_amp=1, batch_size=1):
+    def num_LMS_runs_mode(self, d, n, k, num_runs_LMS_vec, num_runs=1, noise_amp=1, batch_size=1, polynomial=0):
         """
         num_LMS_runs_mode function runs train for data with different number of runs of the LMS process
         and returns RMSE of LMS and pseudo inverse method
@@ -116,6 +118,7 @@ class mode_functions_class():
         :param num_runs: num of times to run the test algorithm (optional)
         :param noise_amp: noise amplitude that added to y (optional)
         :param batch_size: batch size for LMS process (optional)
+        :param polynomial: is it polynomial mode (1) or not (0 - defaulted) (optional)
         :return:
                 RMSE_LMS: RMSE (root mean square error) of test data using LMS method
                 RMSE_PI: RMSE (root mean square error) of test data using pseudo inverse method
@@ -138,7 +141,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                     num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI)
+                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
                 bar.update(i * num_runs + (l + 1))
             RMSE_PI[i] = np.mean(RMSE_PI_run)
             RMSE_LMS[i] = np.mean(RMSE_LMS_run)
@@ -147,7 +150,7 @@ class mode_functions_class():
 
         return RMSE_LMS, RMSE_PI
 
-    def n_samples_mode(self, d, n_sample_vec, k, num_runs=1, noise_amp=1, batch_size=1, num_runs_LMS=1):
+    def n_samples_mode(self, d, n_sample_vec, k, num_runs=1, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
         """
         n_samples_mode function runs train for data with different numbers of samples
         and returns RMSE of LMS and pseudo inverse method
@@ -158,6 +161,7 @@ class mode_functions_class():
         :param batch_size: batch size for LMS process (optional)
         :param num_runs_LMS: number of runs of the LMS process (optional)
         :param noise_amp: noise amplitude that added to y (optional)
+        :param polynomial: is it polynomial mode (1) or not (0 - defaulted) (optional)
         :return:
                 RMSE_LMS: RMSE (root mean square error) of test data using LMS method
                 RMSE_PI: RMSE (root mean square error) of test data using pseudo inverse method
@@ -181,7 +185,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                     num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI)
+                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
                 bar.update(i * num_runs + (l + 1))
             RMSE_PI[i] = np.mean(RMSE_PI_run)
             RMSE_LMS[i] = np.mean(RMSE_LMS_run)
@@ -190,7 +194,7 @@ class mode_functions_class():
 
         return RMSE_LMS, RMSE_PI
 
-    def effective_dimension_mode(self, d, n, k_vec, num_runs=1, noise_amp=1, batch_size=1, num_runs_LMS=1):
+    def effective_dimension_mode(self, d, n, k_vec, num_runs=1, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
         """
         effective_dimension_mode function runs train for data with different effective dimension
         and returns RMSE of LMS and pseudo inverse method
@@ -201,6 +205,7 @@ class mode_functions_class():
         :param batch_size: batch size for LMS process (optional)
         :param num_runs_LMS: number of runs of the LMS process (optional)
         :param noise_amp: noise amplitude that added to y (optional)
+        :param polynomial: is it polynomial mode (1) or not (0 - defaulted) (optional)
         :return:
                 RMSE_LMS: RMSE (root mean square error) of test data using LMS method
                 RMSE_PI: RMSE (root mean square error) of test data using pseudo inverse method
@@ -224,7 +229,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                     num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI)
+                RMSE_LMS_run[l], RMSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
                 bar.update(i * num_runs + (l + 1))
             RMSE_PI[i] = np.mean(RMSE_PI_run)
             RMSE_LMS[i] = np.mean(RMSE_LMS_run)
