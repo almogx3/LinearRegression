@@ -60,17 +60,21 @@ class LMS_function_class():
         y = np.sum(x, axis=0)
         return x, y
 
-    def x_to_power_vector(self, x, d):
+    def create_x_y_power_vector(self, cov_matrix=np.eye(100), mean=np.zeros((100,)),
+                                d=100):
         """
-        x_to_power_vector creates vector of power of x.
-        :param x: x is vector mx1
+        create_x_power_vector creates vector x in dimension d.
+        :param cov_matrix: covariance matrix of vectors
+        :param mean: mean vector of the created vectors
         :param d: d is the maximum polynomial degree
-        :return: x_new: vector of powers of x [[x^0] ,[x^1],...[x^d]]
+        :return:
+                x_mat: vector of powers of x [[x^0] ,[x^1],...[x^d]]
+                y: sum rows (x_mat)
         """
-        x_new = np.ones_like(x)
-        for power_count in (np.arange(d) + 1):
-            x_new = np.concatenate((x_new, np.power(x, power_count)), axis=0)
-        return x_new
+        x = np.random.multivariate_normal(mean, cov_matrix, 1).T
+        x_mat = np.power(x, range(d + 1))
+        y = np.sum(x_mat, axis=1)
+        return x_mat
 
     def LMS(self, x, y, step=1, weights=None, eps_value=5e-3):
         """
