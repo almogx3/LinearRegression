@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from progressbar import *
 from ModeFunctions import mode_functions_class
 
-
 mfc = mode_functions_class()
+
 
 def PCAprocess(x):
     """
@@ -70,14 +70,18 @@ def main():
     # The "real dimension
     k = 10
     # number of runs
-    num_runs = 10
+    num_runs = 100
+    noise_amp_all = 20
+    batch_size_all = 10
+    num_runs_LMS_all = 1
 
     # different SNR mode
     # num_SNR = 10
     # noise_amp_vec = np.concatenate([np.arange(num_SNR), np.arange(num_SNR) * 10])
     # noise_amp_vec += np.ones_like(noise_amp_vec)
     noise_amp_vec = [1, 10, 50, 100, 500, 1000, 1500, 2000, 10000]
-    SNR, RMSE_LMS_SNR, RMSE_PI_SNR = mfc.SNR_mode(d, n, k, noise_amp_vec, num_runs=num_runs, batch_size=1)
+    SNR, RMSE_LMS_SNR, RMSE_PI_SNR = mfc.SNR_mode(d, n, k, noise_amp_vec, num_runs=num_runs, batch_size=batch_size_all,
+                                                  polynomial=1, num_runs_LMS=num_runs_LMS_all)
 
     # plotting the results SNR
     plot(SNR, RMSE_LMS_SNR, color='g', title='RMSEs as function of SNR', xlabel='SNR [dB]',
@@ -85,11 +89,14 @@ def main():
     plt.plot(SNR, RMSE_PI_SNR, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
     pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\SNR_RMSE.pickle', 'wb'))
+                open(r'D:\Documents\GitWorks\LinearRegression\results\SNR_RMSE_polynomial.pickle',
+                     'wb'))
 
     # batch size mode
     batch_size = [1, 2, 5, 10, 50, 100]
-    RMSE_LMS_batch, RMSE_PI_batch = mfc.batch_size_mode(d, n, k, batch_size_vec=batch_size, num_runs=num_runs, noise_amp=5)
+    RMSE_LMS_batch, RMSE_PI_batch = mfc.batch_size_mode(d, n, k, batch_size_vec=batch_size, num_runs=num_runs,
+                                                        noise_amp=noise_amp_all, polynomial=1,
+                                                        num_runs_LMS=num_runs_LMS_all)
 
     # plotting the results batch size
     plot(batch_size, RMSE_LMS_batch, color='g', title='RMSEs as function of Batch size', xlabel='Batch size',
@@ -97,7 +104,7 @@ def main():
     plt.plot(batch_size, RMSE_PI_batch, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
     pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\Batch_RMSE.pickle', 'wb'))
+                open(r'D:\Documents\GitWorks\LinearRegression\results\Batch_RMSE_polynomial.pickle', 'wb'))
 
     # num of runs LMS
     num_runs_LMS_vec = list(np.arange(10) + 1)
@@ -106,44 +113,47 @@ def main():
     num_runs_LMS_vec.append(200)
     num_runs_LMS_vec.append(500)
     RMSE_LMS_runs, RMSE_PI_runs = mfc.num_LMS_runs_mode(d, n, k, num_runs_LMS_vec=num_runs_LMS_vec, num_runs=num_runs,
-                                                    noise_amp=5, batch_size=1)
+                                                        noise_amp=noise_amp_all, batch_size=batch_size_all, polynomial=1)
     # plotting the results num runs LMS
     plot(num_runs_LMS_vec, RMSE_LMS_runs, color='g', title='RMSEs as function of LMS #runs', xlabel='#runs LMS process',
          ylabel='Mean Root Mean Square RMSE')
     plt.plot(num_runs_LMS_vec, RMSE_PI_runs, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
     pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\N_runs_LMS_RMSE.pickle',
+                open(r'D:\Documents\GitWorks\LinearRegression\results\N_runs_LMS_RMSE_polynomial.pickle',
                      'wb'))
 
     # change n sample mode
     n_vec = [d / 1000, d / 500, d / 250, d / 100, d / 50, d / 25, d / 10, d / 5, d / 2]
-    RMSE_n_sample, RMSE_PI_n_sample = mfc.n_samples_mode(d, n_vec, k, num_runs=num_runs, noise_amp=5, batch_size=1, num_runs_LMS=1)
+    RMSE_n_sample, RMSE_PI_n_sample = mfc.n_samples_mode(d, n_vec, k, num_runs=num_runs, noise_amp=noise_amp_all, batch_size=batch_size_all,
+                                                         num_runs_LMS=num_runs_LMS_all, polynomial=1)
     # plotting the results n samples
     plot(n_vec, RMSE_n_sample, color='g', title='RMSEs as function of #samples', xlabel='#sample',
          ylabel='Mean Root Mean Square RMSE')
     plt.plot(n_vec, RMSE_PI_n_sample, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
     pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\N_samples_RMSE.pickle',
+                open(r'D:\Documents\GitWorks\LinearRegression\results\N_samples_RMSE_polymonial.pickle',
                      'wb'))
 
     # effective dimension mode
     # k_vec = np.arange(15) + 5
     k_vec = [d / 500, d / 100, d / 50, d / 10, d / 5, d / 2, d]
-    RMSE_k_effective, RMSE_PI_k_effective = mfc.effective_dimension_mode(d, n, k_vec, num_runs=1,
-                                                                     noise_amp=5, batch_size=1, num_runs_LMS=1)
+    RMSE_k_effective, RMSE_PI_k_effective = mfc.effective_dimension_mode(d, n, k_vec, num_runs=num_runs,
+                                                                         noise_amp=noise_amp_all,
+                                                                         batch_size=batch_size_all, num_runs_LMS=num_runs_LMS_all,
+                                                                         polynomial=1)
     # plotting the results SNR
     plot(k_vec, RMSE_k_effective, color='g', title='RMSEs as function of effective dimension',
          xlabel='effective dimension', ylabel='Mean Root Mean Square RMSE')
     plt.plot(k_vec, RMSE_PI_k_effective, color='b')
     plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
     pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\effective LMS\figures\effective_dim_RMSE.pickle',
+                open(r'D:\Documents\GitWorks\LinearRegression\results\effective_dim_RMSE_polynomial.pickle',
                      'wb'))
 
     print('done')
-
+    plt.close('all')
 
 if __name__ == '__main__':
     main()
