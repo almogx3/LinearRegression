@@ -96,7 +96,7 @@ class LMS_function_class():
 
         return weights
 
-    def LMS_multiple_times(self, x, y, batch=1, mu=5e-3, num_runs=1):
+    def LMS_multiple_times(self, x, y, batch=1, mu=1e-3, num_runs=1):
         """
         LMS_multiple_times runs LMS process multiple times according to num_runs
         :param x: input signal vector
@@ -108,12 +108,16 @@ class LMS_function_class():
                 weights: final weights from LMS process
         """
         weights = self.LMS(x, y, batch=batch, mu=mu)
+        weights_old = weights
         for counts in range(num_runs - 1):
             weights = self.LMS(x, y, batch=batch, weights=weights, mu=mu)
+            if np.array_equal(weights, weights_old):
+                break
+            weights_old = weights
         #     option to change for to while and add converge condition (using error or weights change)
         return weights
 
-    def train(self, d, n, k, mu=1e-6, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
+    def train(self, d, n, k, mu=1e-5, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
         """
         train function create data fits to d, n, k, noise amp,
         and trains it using LMS and pseudo inverse (PI) method
@@ -138,7 +142,7 @@ class LMS_function_class():
         y_real = y
         y = y + noise_amp * np.random.rand(y.shape[0], )
         SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
-        weights_LMS = self.LMS_multiple_times(x, y, batch=batch_size, num_runs=num_runs_LMS,mu=mu)
+        weights_LMS = self.LMS_multiple_times(x, y, batch=batch_size, num_runs=num_runs_LMS, mu=mu)
         weights_PI = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
 
         return weights_LMS, weights_PI, SNR
