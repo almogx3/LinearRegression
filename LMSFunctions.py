@@ -76,50 +76,55 @@ class LMS_function_class():
         y = np.sum(x_mat, axis=1)
         return x_mat
 
-    def LMS(self, x, y, step=1, weights=None, eps_value=5e-3):
+    def LMS(self, x, y, batch=1, weights=None, mu=5e-3):
         """
         LMS runs LMS algorithm one time on x,y
         :param x: input signal vector
         :param y: desired signal vector
-        :param step: step size (filter length)
+        :param batch: batch size (filter length)
         :param weights: starting point for weights (optional)
-        :param eps_value: weights step size (changing weights each time with error*eps_value)
+        :param mu: weights step size (changing weights each time with error*mu)
         :return: weights: final weights from LMS process
         """
         if weights is None:
             weights = np.zeros((x.shape[0],))
-        for ind in np.arange(0, len(y), step):
-            x_current = x[:, ind:(ind + step)]
-            error_current = y[ind:(ind + step)] - np.matmul(x_current.T, weights)
-            error_eps = (error_current * eps_value)
+        for ind in np.arange(0, len(y), batch):
+            x_current = x[:, ind:(ind + batch)]
+            error_current = y[ind:(ind + batch)] - np.matmul(x_current.T, weights)
+            error_eps = (error_current * mu)
             weights = weights + np.dot(x_current, error_eps)
 
         return weights
 
-    def LMS_multiple_times(self, x, y, step=1, eps_value=5e-3, num_runs=1):
+    def LMS_multiple_times(self, x, y, batch=1, mu=1e-3, num_runs=1):
         """
         LMS_multiple_times runs LMS process multiple times according to num_runs
         :param x: input signal vector
         :param y: desired signal vector
-        :param step: step size (filter length)
-        :param eps_value: weights step size (changing weights each time with error*eps_value)
+        :param batch: batch size (filter length)
+        :param mu: weights step size (changing weights each time with error*mu)
         :param num_runs: number if times to run LMS process
         :return:
                 weights: final weights from LMS process
         """
-        weights = self.LMS(x, y, step=step, eps_value=eps_value)
+        weights = self.LMS(x, y, batch=batch, mu=mu)
+        weights_old = weights
         for counts in range(num_runs - 1):
-            weights = self.LMS(x, y, step=step, weights=weights, eps_value=eps_value)
+            weights = self.LMS(x, y, batch=batch, weights=weights, mu=mu)
+            if np.array_equal(weights, weights_old):
+                break
+            weights_old = weights
         #     option to change for to while and add converge condition (using error or weights change)
         return weights
 
-    def train(self, d, n, k, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
+    def train(self, d, n, k, mu=1e-5, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
         """
         train function create data fits to d, n, k, noise amp,
         and trains it using LMS and pseudo inverse (PI) method
         :param d: dimension of vector x (x = [1,x(d dimension)])
         :param n: number of wanted vectors
         :param k: the effective dimension of x
+        :param mu: weights step size (changing weights each time with error*mu)
         :param noise_amp: amplitude of the noise added to y (optional)
         :param batch_size: batch size for LMS process (optional)
         :param num_runs_LMS: number of times to run the LMS process (optional)
@@ -137,7 +142,7 @@ class LMS_function_class():
         y_real = y
         y = y + noise_amp * np.random.rand(y.shape[0], )
         SNR = 10 * np.log10(np.linalg.norm(y_real) / np.linalg.norm((np.abs(y - y_real))))  # SNR in db
-        weights_LMS = self.LMS_multiple_times(x, y, step=batch_size, num_runs=num_runs_LMS)
+        weights_LMS = self.LMS_multiple_times(x, y, batch=batch_size, num_runs=num_runs_LMS, mu=mu)
         weights_PI = np.matmul(np.matmul(x, np.linalg.inv(np.matmul(x.T, x))), y)
 
         return weights_LMS, weights_PI, SNR
@@ -152,8 +157,8 @@ class LMS_function_class():
         :param weights_PI: weights of the train data using pseudo inverse (PI) method
         :param polynomial: is it polynomial mode (1) or not (0 - defaulted) (optional)
         :return:
-                RMSE_LMS: RMSE (root mean square error) of LMS method
-                RMSE_PI: RMSE (root mean square error) of pseudo inverse method
+                MSE_LMS: MSE (mean square error) of LMS method
+                MSE_PI: MSE (mean square error) of pseudo inverse method
         """
         R = self.create_cov_matrix(d, k)
         if polynomial == 0:
@@ -162,7 +167,7 @@ class LMS_function_class():
             x, y = self.create_random_vectors_polynomial(n, R, np.zeros((d,)))
         y_PI = np.matmul(x.T, weights_PI)
         y_LMS = np.matmul(x.T, weights_LMS)
-        RMSE_LMS = np.mean((y - y_LMS) ** 2) ** 0.5
-        RMSE_PI = np.mean((y - y_PI) ** 2) ** 0.5
+        MSE_LMS = np.mean((y - y_LMS) ** 2)
+        MSE_PI = np.mean((y - y_PI) ** 2)
 
-        return RMSE_LMS, RMSE_PI
+        return MSE_LMS, MSE_PI
