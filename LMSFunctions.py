@@ -117,7 +117,7 @@ class LMS_function_class():
         #     option to change for to while and add converge condition (using error or weights change)
         return weights
 
-    def train(self, d, n, k, mu=1e-5, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
+    def train(self, d, n, k, mu=8e-3, noise_amp=1, batch_size=1, num_runs_LMS=1, polynomial=0):
         """
         train function create data fits to d, n, k, noise amp,
         and trains it using LMS and pseudo inverse (PI) method
@@ -147,7 +147,7 @@ class LMS_function_class():
 
         return weights_LMS, weights_PI, SNR
 
-    def test(self, d, n, k, weights_LMS, weights_PI, polynomial=0):
+    def test(self, d, n, k, weights_LMS, weights_PI, noise_amp=1, polynomial=0):
         """
         test function creates test data and test weights of LMS and Pseudo inverse algorithm
         :param d:dimension of vector x (x = [1,x(d dimension)])
@@ -155,6 +155,7 @@ class LMS_function_class():
         :param k: the effective dimension of x
         :param weights_LMS: weights of the train data using LMS method
         :param weights_PI: weights of the train data using pseudo inverse (PI) method
+        :param noise_amp: amplitude of the noise added to y (optional)
         :param polynomial: is it polynomial mode (1) or not (0 - defaulted) (optional)
         :return:
                 MSE_LMS: MSE (mean square error) of LMS method
@@ -165,6 +166,7 @@ class LMS_function_class():
             x, y = self.create_random_vectors(n, R, np.zeros((d,)))
         else:
             x, y = self.create_random_vectors_polynomial(n, R, np.zeros((d,)))
+        # y = y + noise_amp * np.random.rand(y.shape[0], )
         y_PI = np.matmul(x.T, weights_PI)
         y_LMS = np.matmul(x.T, weights_LMS)
         MSE_LMS = np.mean((y - y_LMS) ** 2)
