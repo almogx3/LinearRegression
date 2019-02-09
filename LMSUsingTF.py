@@ -5,9 +5,24 @@ from progressbar import *
 from LMSFunctions import LMS_function_class
 
 
+def calc_layer_weights(x, n_in, n_out):
+    """
+    calc_layer_weights calculates the weights one time
+    :param x: input data
+    :param n_in: number of inputs (dimension of the input data)
+    :param n_out: number of outputs (dimension of the output data)
+    :return:
+            predict: the predicted result
+    """
+    W = tf.Variable(tf.zeros((n_in,n_out)))
+    b = tf.Variable(tf.zeros((1, n_out)))
+    predict = tf.add(tf.linalg.matmul(x, W), b)
+
+    return predict
+
 def LMS_TF_one_neuron(d=1000, n=100, k=10, noise_amp=1, batch_size=20, total_runs=100):
     # Parameters
-    learning_rate = 1e-3
+    learning_rate = 8e-3
     num_steps = 1000
     display_step = 50
 
