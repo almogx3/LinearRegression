@@ -49,7 +49,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                         num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
+                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, noise_amp, polynomial)
                 bar.update(i * num_runs + (l + 1))
             MSE_PI[i] = np.mean(MSE_PI_run)
             MSE_LMS[i] = np.mean(MSE_LMS_run)
@@ -99,7 +99,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                         num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
+                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, noise_amp, polynomial)
                 bar.update(i * num_runs + (l + 1))
             MSE_PI[i] = np.mean(MSE_PI_run)
             MSE_LMS[i] = np.mean(MSE_LMS_run)
@@ -142,7 +142,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                         num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
+                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, noise_amp, polynomial)
                 bar.update(i * num_runs + (l + 1))
             MSE_PI[i] = np.mean(MSE_PI_run)
             MSE_LMS[i] = np.mean(MSE_LMS_run)
@@ -186,7 +186,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                         num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
+                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, noise_amp, polynomial)
                 bar.update(i * num_runs + (l + 1))
             MSE_PI[i] = np.mean(MSE_PI_run)
             MSE_LMS[i] = np.mean(MSE_LMS_run)
@@ -231,7 +231,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, noise_amp=noise_amp, batch_size=batch_size,
                                                         num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
+                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, noise_amp, polynomial)
                 bar.update(i * num_runs + (l + 1))
             MSE_PI[i] = np.mean(MSE_PI_run)
             MSE_LMS[i] = np.mean(MSE_LMS_run)
@@ -276,7 +276,7 @@ class mode_functions_class():
             weights_LMS, weights_PI, SNR[i] = LMS.train(d, n, k, mu=mu, noise_amp=noise_amp, batch_size=batch_size,
                                                         num_runs_LMS=num_runs_LMS)
             for l in range(num_runs):
-                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, polynomial)
+                MSE_LMS_run[l], MSE_PI_run[l] = LMS.test(d, n, k, weights_LMS, weights_PI, noise_amp, polynomial)
                 bar.update(i * num_runs + (l + 1))
             MSE_PI[i] = np.mean(MSE_PI_run)
             MSE_LMS[i] = np.mean(MSE_LMS_run)
