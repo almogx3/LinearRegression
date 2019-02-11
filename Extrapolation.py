@@ -90,7 +90,7 @@ def main():
     # number of runs
     num_runs = 100
     noise_amp_all = 4
-    batch_size_all = 5
+    batch_size_all = 1
     num_runs_LMS_all = 1
     polynomial_mode = 0
 
@@ -99,130 +99,130 @@ def main():
     # noise_amp_vec = np.concatenate([np.arange(num_SNR), np.arange(num_SNR) * 10])
     # noise_amp_vec += np.ones_like(noise_amp_vec)
 
-    noise_amp_vec = [0.25,0.5, 0.75, 1, 10,20, 30, 40, 50, 100, 500]
+    noise_amp_vec = [0.1, 0.2, 0.25, 0.5, 0.75, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50]
     SNR, MSE_LMS_SNR, MSE_PI_SNR = mfc.SNR_mode(d, n, k, noise_amp_vec, num_runs=num_runs, batch_size=batch_size_all,
                                                 polynomial=polynomial_mode, num_runs_LMS=num_runs_LMS_all)
 
     # plotting the results SNR
-    plot(SNR, MSE_LMS_SNR, color='g', title='MSEs as function of SNR', xlabel='SNR [dB]',
+    plot(SNR, MSE_LMS_SNR, color='b', title='MSEs as function of SNR', xlabel='SNR [dB]',
          ylabel='Mean of MSE')
-    plt.plot(SNR, MSE_PI_SNR, color='b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    # plt.plot(SNR, MSE_PI_SNR, color='orange')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
     pickle.dump(plt.gcf(),
                 open(r'D:\Documents\GitWorks\LinearRegression\results\SNR_MSE.pickle',
                      'wb'))
-    plotyy(SNR, MSE_LMS_SNR, MSE_PI_SNR, color1='g', color2='b',
+    plotyy(SNR, MSE_LMS_SNR, MSE_PI_SNR, color1='b', color2='orange',
            title='MSEs as function of SNR', xlabel='SNR',
            y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\SNR_MSE-yy.pickle',
-                     'wb'))
-
-    # batch size mode
-    batch_size = [1, 2, 5, 10, 15, 50]
-    MSE_LMS_batch, MSE_PI_batch = mfc.batch_size_mode(d, n, k, batch_size_vec=batch_size, num_runs=num_runs,
-                                                      noise_amp=noise_amp_all, polynomial=polynomial_mode,
-                                                      num_runs_LMS=num_runs_LMS_all)
-
-    # plotting the results batch size
-    plot(batch_size, MSE_LMS_batch, color='g', title='MSEs as function of Batch size', xlabel='Batch size',
-         ylabel='Mean of MSE')
-    plt.plot(batch_size, MSE_PI_batch, color='b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\Batch_MSE.pickle', 'wb'))
-    plotyy(batch_size, MSE_LMS_batch, MSE_PI_batch, color1='g', color2='b',
-           title='MSEs as function of Batch size', xlabel='Batch size',
-           y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\Batch_MSE-yy.pickle', 'wb'))
-
-    # num of runs LMS
-    num_runs_LMS_vec = list(np.arange(10) + 1)
-    num_runs_LMS_vec.append(50)
-    num_runs_LMS_vec.append(100)
-    num_runs_LMS_vec.append(200)
-    num_runs_LMS_vec.append(500)
-    MSE_LMS_runs, MSE_PI_runs = mfc.num_LMS_runs_mode(d, n, k, num_runs_LMS_vec=num_runs_LMS_vec, num_runs=num_runs,
-                                                      noise_amp=noise_amp_all, batch_size=batch_size_all,
-                                                      polynomial=polynomial_mode)
-    # plotting the results num runs LMS
-    plot(num_runs_LMS_vec, MSE_LMS_runs, color='g', title='MSEs as function of LMS #runs', xlabel='#runs LMS process',
-         ylabel='Mean of MSE')
-    plt.plot(num_runs_LMS_vec, MSE_PI_runs, color='b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\N_runs_LMS_MSE.pickle', 'wb'))
-    plotyy(num_runs_LMS_vec, MSE_LMS_runs, MSE_PI_runs, color1='g', color2='b',
-           title='MSEs as function LMS #runs', xlabel='#runs LMS process',
-           y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\N_runs_LMS_MSE-yy.pickle', 'wb'))
-
-    # change n sample mode
-    n_vec = [d / 1000, d / 500, d / 250, d / 100, d / 50, d / 25, d / 10, d / 5, d / 2, d]
-    MSE_n_sample, MSE_PI_n_sample = mfc.n_samples_mode(d, n_vec, k, num_runs=num_runs, noise_amp=noise_amp_all,
-                                                       batch_size=batch_size_all,
-                                                       num_runs_LMS=num_runs_LMS_all, polynomial=polynomial_mode)
-    # plotting the results n samples
-    plot(n_vec, MSE_n_sample, color='g', title='MSEs as function of #samples', xlabel='#sample',
-         ylabel='Mean of MSE')
-    plt.plot(n_vec, MSE_PI_n_sample, color='b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\N_samples_MSE.pickle',
-                     'wb'))
-    plotyy(n_vec, MSE_n_sample, MSE_PI_n_sample, color1='g', color2='b',
-           title='MSEs as function of #samples', xlabel='#sample',
-           y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\N_samples_MSE-yy.pickle',
-                     'wb'))
-
-    # effective dimension mode
-    # k_vec = np.arange(15) + 5
-    k_vec = [d / 500, d / 100, d / 50, d / 10, d / 5, d / 2, d]
-    MSE_k_effective, MSE_PI_k_effective = mfc.effective_dimension_mode(d, n, k_vec, num_runs=num_runs,
-                                                                       noise_amp=noise_amp_all,
-                                                                       batch_size=batch_size_all,
-                                                                       num_runs_LMS=num_runs_LMS_all,
-                                                                       polynomial=1)
-    # plotting the results SNR
-    plot(k_vec, MSE_k_effective, color='g', title='MSEs as function of effective dimension',
-         xlabel='effective dimension', ylabel='Mean of MSE')
-    plt.plot(k_vec, MSE_PI_k_effective, color='b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\effective_dim_MSE.pickle',
-                     'wb'))
-    plotyy(k_vec, MSE_k_effective, MSE_PI_k_effective, color1='g', color2='b',
-           title='MSEs as function of effective dimension', xlabel='effective dimension',
-           y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\effective_dim_MSE-yy.pickle',
-                     'wb'))
-
-    # step size mode
-    mu_vec = np.array([1e-4, 1e-3, 0.001, 0.01, 0.1, 1, 2, 3, 4, 5, 10, 20, 50, 100]) * 1e-4
-    MSE_mu, MSE_PI_mu = mfc.step_size_mode(d, n, k, mu_vec=mu_vec, num_runs=num_runs,
-                                           noise_amp=noise_amp_all,
-                                           batch_size=batch_size_all,
-                                           num_runs_LMS=num_runs_LMS_all,
-                                           polynomial=polynomial_mode)
-
-    # plotting the results SNR
-    plot(mu_vec, MSE_mu, color='g', title='MSEs as function of effective dimension',
-         xlabel='step size', ylabel='Mean of MSE')
-    plt.plot(mu_vec, MSE_PI_mu, color='b')
-    plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\step_size_MSE.pickle',
-                     'wb'))
-    plotyy(mu_vec, MSE_mu, MSE_PI_mu, color1='g', color2='b', title='MSEs as function of step size', xlabel='step size',
-           y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
-    pickle.dump(plt.gcf(),
-                open(r'D:\Documents\GitWorks\LinearRegression\results\step_size_MSE-yy.pickle',
-                     'wb'))
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\SNR_MSE-yy.pickle',
+    #                  'wb'))
+    #
+    # # batch size mode
+    # batch_size = [1, 2,3,4, 5, 6,7, 8, 9, 10, 15, 20, 30, 50]
+    # MSE_LMS_batch, MSE_PI_batch = mfc.batch_size_mode(d, n, k, batch_size_vec=batch_size, num_runs=num_runs,
+    #                                                   noise_amp=noise_amp_all, polynomial=polynomial_mode,
+    #                                                   num_runs_LMS=num_runs_LMS_all)
+    #
+    # # plotting the results batch size
+    # plot(batch_size, MSE_LMS_batch, color='g', title='MSEs as function of Batch size', xlabel='Batch size',
+    #      ylabel='Mean of MSE')
+    # plt.plot(batch_size, MSE_PI_batch, color='b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\Batch_MSE.pickle', 'wb'))
+    # plotyy(batch_size, MSE_LMS_batch, MSE_PI_batch, color1='g', color2='b',
+    #        title='MSEs as function of Batch size', xlabel='Batch size',
+    #        y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\Batch_MSE-yy.pickle', 'wb'))
+    #
+    # # num of runs LMS
+    # num_runs_LMS_vec = list(np.arange(10) + 1)
+    # num_runs_LMS_vec.append(50)
+    # num_runs_LMS_vec.append(100)
+    # num_runs_LMS_vec.append(200)
+    # num_runs_LMS_vec.append(500)
+    # MSE_LMS_runs, MSE_PI_runs = mfc.num_LMS_runs_mode(d, n, k, num_runs_LMS_vec=num_runs_LMS_vec, num_runs=num_runs,
+    #                                                   noise_amp=noise_amp_all, batch_size=batch_size_all,
+    #                                                   polynomial=polynomial_mode)
+    # # plotting the results num runs LMS
+    # plot(num_runs_LMS_vec, MSE_LMS_runs, color='g', title='MSEs as function of LMS #runs', xlabel='#runs LMS process',
+    #      ylabel='Mean of MSE')
+    # plt.plot(num_runs_LMS_vec, MSE_PI_runs, color='b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\N_runs_LMS_MSE.pickle', 'wb'))
+    # plotyy(num_runs_LMS_vec, MSE_LMS_runs, MSE_PI_runs, color1='g', color2='b',
+    #        title='MSEs as function LMS #runs', xlabel='#runs LMS process',
+    #        y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\N_runs_LMS_MSE-yy.pickle', 'wb'))
+    #
+    # # change n sample mode
+    # n_vec = [d / 200, d / 100, d / 50, d / 25, d / 10, d / 5, d / 2, d]
+    # MSE_n_sample, MSE_PI_n_sample = mfc.n_samples_mode(d, n_vec, k, num_runs=num_runs, noise_amp=noise_amp_all,
+    #                                                    batch_size=batch_size_all,
+    #                                                    num_runs_LMS=num_runs_LMS_all, polynomial=polynomial_mode)
+    # # plotting the results n samples
+    # plot(n_vec, MSE_n_sample, color='g', title='MSEs as function of #samples', xlabel='#sample',
+    #      ylabel='Mean of MSE')
+    # plt.plot(n_vec, MSE_PI_n_sample, color='b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\N_samples_MSE.pickle',
+    #                  'wb'))
+    # plotyy(n_vec, MSE_n_sample, MSE_PI_n_sample, color1='g', color2='b',
+    #        title='MSEs as function of #samples', xlabel='#sample',
+    #        y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\N_samples_MSE-yy.pickle',
+    #                  'wb'))
+    #
+    # # effective dimension mode
+    # # k_vec = np.arange(15) + 5
+    # k_vec = [d / 500, d / 100, d / 50, d / 10, d / 5, d / 2, d]
+    # MSE_k_effective, MSE_PI_k_effective = mfc.effective_dimension_mode(d, n, k_vec, num_runs=num_runs,
+    #                                                                    noise_amp=noise_amp_all,
+    #                                                                    batch_size=batch_size_all,
+    #                                                                    num_runs_LMS=num_runs_LMS_all,
+    #                                                                    polynomial=1)
+    # # plotting the results SNR
+    # plot(k_vec, MSE_k_effective, color='g', title='MSEs as function of effective dimension',
+    #      xlabel='effective dimension', ylabel='Mean of MSE')
+    # plt.plot(k_vec, MSE_PI_k_effective, color='b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\effective_dim_MSE.pickle',
+    #                  'wb'))
+    # plotyy(k_vec, MSE_k_effective, MSE_PI_k_effective, color1='g', color2='b',
+    #        title='MSEs as function of effective dimension', xlabel='effective dimension',
+    #        y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\effective_dim_MSE-yy.pickle',
+    #                  'wb'))
+    #
+    # # step size mode
+    # mu_vec = np.array([ 1, 2, 3, 4, 5, 10, 20, 30, 50, 100]) * 1e-4
+    # MSE_mu, MSE_PI_mu = mfc.step_size_mode(d, n, k, mu_vec=mu_vec, num_runs=num_runs,
+    #                                        noise_amp=noise_amp_all,
+    #                                        batch_size=batch_size_all,
+    #                                        num_runs_LMS=num_runs_LMS_all,
+    #                                        polynomial=polynomial_mode)
+    #
+    # # plotting the results SNR
+    # plot(mu_vec, MSE_mu, color='g', title='MSEs as function of step size',
+    #      xlabel='step size', ylabel='Mean of MSE')
+    # plt.plot(mu_vec, MSE_PI_mu, color='b')
+    # plt.legend(('weights LMS', 'weights pseudo inverse'), loc='upper right')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\step_size_MSE.pickle',
+    #                  'wb'))
+    # plotyy(mu_vec, MSE_mu, MSE_PI_mu, color1='g', color2='b', title='MSEs as function of step size', xlabel='step size',
+    #        y1label='Mean of MSE - LMS', y2label='Mean of MSE - PI')
+    # pickle.dump(plt.gcf(),
+    #             open(r'D:\Documents\GitWorks\LinearRegression\results\step_size_MSE-yy.pickle',
+    #                  'wb'))
 
     print('done')
     plt.close('all')
